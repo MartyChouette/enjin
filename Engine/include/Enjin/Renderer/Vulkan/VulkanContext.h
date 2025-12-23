@@ -24,7 +24,12 @@ public:
     u32 GetGraphicsQueueFamily() const { return m_GraphicsQueueFamily; }
     u32 GetPresentQueueFamily() const { return m_PresentQueueFamily; }
 
-private:
+    // Find present queue family for a surface
+    u32 FindPresentQueueFamily(VkSurfaceKHR surface) const;
+    void SetPresentQueueFamily(u32 queueFamily);
+
+protected:
+    friend class VulkanRenderer;
     bool CreateInstance();
     bool SelectPhysicalDevice();
     bool CreateLogicalDevice();

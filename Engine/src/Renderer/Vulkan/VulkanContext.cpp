@@ -2,6 +2,8 @@
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Core/Assert.h"
 #include <set>
+#include <string>
+#include <GLFW/glfw3.h>
 
 namespace Enjin {
 namespace Renderer {
@@ -169,12 +171,17 @@ bool VulkanContext::CreateLogicalDevice() {
 
     VkPhysicalDeviceFeatures deviceFeatures{};
 
+    const std::vector<const char*> deviceExtensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     createInfo.pQueueCreateInfos = &queueCreateInfo;
     createInfo.queueCreateInfoCount = 1;
     createInfo.pEnabledFeatures = &deviceFeatures;
-    createInfo.enabledExtensionCount = 0; // Will add swapchain extension later
+    createInfo.enabledExtensionCount = static_cast<u32>(deviceExtensions.size());
+    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 #ifdef ENJIN_BUILD_DEBUG
     if (CheckValidationLayerSupport()) {
@@ -194,19 +201,44 @@ bool VulkanContext::CreateLogicalDevice() {
 
 bool VulkanContext::CreateQueues() {
     vkGetDeviceQueue(m_Device, m_GraphicsQueueFamily, 0, &m_GraphicsQueue);
-    vkGetDeviceQueue(m_Device, m_PresentQueueFamily, 0, &m_PresentQueue);
+    // Present queue will be set when we have a surface
+    m_PresentQueueFamily = m_GraphicsQueueFamily;
+    m_PresentQueue = m_GraphicsQueue;
     return true;
 }
 
+u32 VulkanContext::FindPresentQueueFamily(VkSurfaceKHR surface) const {
+    u32 queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &queueFamilyCount, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &queueFamilyCount, queueFamilies.data());
+
+    for (u32 i = 0; i < queueFamilyCount; ++i) {
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(m_PhysicalDevice, i, surface, &presentSupport);
+        if (presentSupport) {
+            return i;
+        }
+    }
+
+    return UINT32_MAX;
+}
+
+void VulkanContext::SetPresentQueueFamily(u32 queueFamily) {
+    m_PresentQueueFamily = queueFamily;
+    vkGetDeviceQueue(m_Device, queueFamily, 0, &m_PresentQueue);
+}
+
 std::vector<const char*> VulkanContext::GetRequiredExtensions() const {
-    std::vector<const char*> extensions;
+    u32 glfwExtensionCount = 0;
+    const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
 #ifdef ENJIN_BUILD_DEBUG
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
-
-    // GLFW will provide surface extensions
-    // This will be updated when windowing is integrated
 
     return extensions;
 }
@@ -239,6 +271,21 @@ bool VulkanContext::IsDeviceSuitable(VkPhysicalDevice device) const {
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceProperties(device, &properties);
     vkGetPhysicalDeviceFeatures(device, &features);
+
+    // Check for required extensions
+    u32 extensionCount;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+    std::set<std::string> requiredExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    for (const auto& extension : availableExtensions) {
+        requiredExtensions.erase(extension.extensionName);
+    }
+
+    if (!requiredExtensions.empty()) {
+        return false; // Missing required extensions
+    }
 
     // Prefer discrete GPU
     if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {

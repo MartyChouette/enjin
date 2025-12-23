@@ -5,6 +5,11 @@
 
 namespace Enjin {
 
+extern Window* CreateWindow(const WindowDesc& desc);
+extern void DestroyWindow(Window* window);
+
+namespace Enjin {
+
 Application::Application() {
 }
 
@@ -27,11 +32,31 @@ void Application::InitializeEngine() {
     ENJIN_LOG_INFO(Core, "Initializing Enjin Engine...");
     
     Logger::Get().Initialize();
+    
+    // Create window
+    WindowDesc windowDesc;
+    windowDesc.width = 1280;
+    windowDesc.height = 720;
+    windowDesc.title = "Enjin Engine";
+    m_Window = CreateWindow(windowDesc);
+    
+    if (!m_Window) {
+        ENJIN_LOG_FATAL(Core, "Failed to create window");
+        m_Running = false;
+        return;
+    }
+    
     ENJIN_LOG_INFO(Core, "Engine initialized successfully");
 }
 
 void Application::ShutdownEngine() {
     ENJIN_LOG_INFO(Core, "Shutting down Enjin Engine...");
+    
+    if (m_Window) {
+        DestroyWindow(m_Window);
+        m_Window = nullptr;
+    }
+    
     Logger::Get().Shutdown();
 }
 
