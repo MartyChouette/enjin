@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.20)
+
+# Engine library - Rendering, ECS, Asset system, etc.
+file(GLOB_RECURSE ENGINE_SOURCES
+    "src/*.cpp"
+    "include/*.h"
+    "include/*.hpp"
+)
+
+add_library(EnjinEngine STATIC ${ENGINE_SOURCES})
+
+target_include_directories(EnjinEngine PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(EnjinEngine PUBLIC
+    EnjinCore
+)
+
+target_compile_features(EnjinEngine PUBLIC cxx_std_20)
+
+# Find Vulkan
+find_package(Vulkan REQUIRED)
+target_link_libraries(EnjinEngine PUBLIC Vulkan::Vulkan)
+
+# Find GLFW (for windowing - permissive license)
+find_package(glfw3 REQUIRED)
+target_link_libraries(EnjinEngine PUBLIC glfw)
+
+# Optional: Find shaderc for shader compilation
+# find_package(shaderc REQUIRED)
+# target_link_libraries(EnjinEngine PUBLIC shaderc::shaderc)
