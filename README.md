@@ -2,6 +2,12 @@
 
 A proprietary, licensable 3D game engine built from scratch using Vulkan API. Designed for maximum performance, extensibility, and ease of use.
 
+## ⚠️ Status: Foundation Complete, Implementation In Progress
+
+**Current State**: The engine has complete architecture and interfaces, but many implementations are stubs that need completion. See [STATUS.md](docs/STATUS.md) for details.
+
+**To Run**: You'll need to compile shaders and complete some critical implementations. See [QUICK_FIX.md](docs/QUICK_FIX.md) for getting started.
+
 ## 🎯 Key Features
 
 ### Rendering
