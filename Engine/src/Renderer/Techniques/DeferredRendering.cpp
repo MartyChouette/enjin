@@ -6,6 +6,7 @@
 #include "Enjin/Renderer/RenderPipeline/RenderPipeline.h"
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Core/Assert.h"
+#include <array>
 
 namespace Enjin {
 namespace Renderer {

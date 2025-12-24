@@ -13,6 +13,8 @@ namespace Renderer {
 const std::vector<const char*> VALIDATION_LAYERS = {
     "VK_LAYER_KHRONOS_validation"
 };
+#else
+const std::vector<const char*> VALIDATION_LAYERS = {};
 #endif
 
 VulkanContext::VulkanContext() {
