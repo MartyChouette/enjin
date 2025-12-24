@@ -20,12 +20,37 @@ target_compile_features(EnjinCore PUBLIC cxx_std_20)
 # Try multiple methods to find GLFW
 set(GLFW_FOUND FALSE)
 
-# Method 1: Try vcpkg (if using vcpkg)
-if(NOT GLFW_FOUND)
-    find_package(glfw3 QUIET)
-    if(glfw3_FOUND)
-        set(GLFW_FOUND TRUE)
-        target_link_libraries(EnjinCore PUBLIC glfw)
+# Method 1: Check if vcpkg is being used and GLFW is available
+if(CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_TOOLCHAIN_FILE}")
+    # vcpkg toolchain is being used
+    # Try to find GLFW via vcpkg's installed packages
+    find_path(GLFW_VCPKG_INCLUDE_DIR
+        NAMES GLFW/glfw3.h
+        PATHS
+            ${VCPKG_ROOT}/installed/x64-windows/include
+            ${VCPKG_ROOT}/installed/x86-windows/include
+            C:/vcpkg/installed/x64-windows/include
+            C:/vcpkg/installed/x86-windows/include
+        NO_DEFAULT_PATH
+    )
+    
+    if(GLFW_VCPKG_INCLUDE_DIR)
+        find_library(GLFW_VCPKG_LIBRARY
+            NAMES glfw3 glfw
+            PATHS
+                ${VCPKG_ROOT}/installed/x64-windows/lib
+                ${VCPKG_ROOT}/installed/x86-windows/lib
+                C:/vcpkg/installed/x64-windows/lib
+                C:/vcpkg/installed/x86-windows/lib
+            NO_DEFAULT_PATH
+        )
+        
+        if(GLFW_VCPKG_LIBRARY)
+            set(GLFW_FOUND TRUE)
+            target_include_directories(EnjinCore PUBLIC ${GLFW_VCPKG_INCLUDE_DIR})
+            target_link_libraries(EnjinCore PUBLIC ${GLFW_VCPKG_LIBRARY})
+            message(STATUS "Found GLFW via vcpkg: ${GLFW_VCPKG_LIBRARY}")
+        endif()
     endif()
 endif()
 
@@ -39,6 +64,7 @@ if(NOT GLFW_FOUND AND UNIX AND NOT APPLE)
             target_include_directories(EnjinCore PUBLIC ${GLFW3_INCLUDE_DIRS})
             target_link_libraries(EnjinCore PUBLIC ${GLFW3_LIBRARIES})
             target_compile_options(EnjinCore PUBLIC ${GLFW3_CFLAGS_OTHER})
+            message(STATUS "Found GLFW via pkg-config")
         endif()
     endif()
 endif()
@@ -52,8 +78,8 @@ if(NOT GLFW_FOUND)
             ${CMAKE_SOURCE_DIR}/../third_party/glfw/include
             /usr/include
             /usr/local/include
-            C:/vcpkg/installed/x64-windows/include
-            ${VCPKG_ROOT}/installed/x64-windows/include
+            C:/glfw/include
+            ${CMAKE_PREFIX_PATH}/include
     )
     
     find_library(GLFW_LIBRARY
@@ -63,33 +89,38 @@ if(NOT GLFW_FOUND)
             ${CMAKE_SOURCE_DIR}/../third_party/glfw/lib
             /usr/lib
             /usr/local/lib
-            C:/vcpkg/installed/x64-windows/lib
-            ${VCPKG_ROOT}/installed/x64-windows/lib
+            C:/glfw/lib
+            ${CMAKE_PREFIX_PATH}/lib
     )
     
     if(GLFW_INCLUDE_DIR AND GLFW_LIBRARY)
         set(GLFW_FOUND TRUE)
         target_include_directories(EnjinCore PUBLIC ${GLFW_INCLUDE_DIR})
         target_link_libraries(EnjinCore PUBLIC ${GLFW_LIBRARY})
+        message(STATUS "Found GLFW manually: ${GLFW_LIBRARY}")
     endif()
 endif()
 
 # Method 4: Use FetchContent as last resort (downloads GLFW)
 if(NOT GLFW_FOUND)
-    message(STATUS "GLFW not found, using FetchContent to download...")
+    message(STATUS "GLFW not found in system, using FetchContent to download and build...")
     include(FetchContent)
     FetchContent_Declare(
         glfw
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.3.8
     )
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(glfw)
     set(GLFW_FOUND TRUE)
     target_link_libraries(EnjinCore PUBLIC glfw)
+    message(STATUS "GLFW downloaded and built via FetchContent")
 endif()
 
 if(NOT GLFW_FOUND)
-    message(FATAL_ERROR "Could not find GLFW. Please install GLFW3 or set GLFW3_DIR")
+    message(FATAL_ERROR "Could not find or build GLFW. Please install GLFW3 or check your vcpkg installation.")
 endif()
 
 # Platform-specific settings
