@@ -12,7 +12,7 @@ public:
         ENJIN_LOG_INFO(Editor, "Enjin Editor shutting down...");
     }
 
-    void Update(f32 deltaTime) override {
+    void Update(Enjin::f32 deltaTime) override {
         (void)deltaTime;
         // Editor update logic
     }

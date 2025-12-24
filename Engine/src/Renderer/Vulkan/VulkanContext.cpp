@@ -3,6 +3,7 @@
 #include "Enjin/Core/Assert.h"
 #include <set>
 #include <string>
+#include <cstring>
 #include <GLFW/glfw3.h>
 
 namespace Enjin {

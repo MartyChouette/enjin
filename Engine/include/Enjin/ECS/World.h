@@ -7,18 +7,44 @@
 #include <unordered_map>
 #include <memory>
 
+/**
+ * @file World.h
+ * @brief Main ECS container managing entities, components, and systems
+ * @author Enjin Engine Team
+ * @date 2025
+ */
+
 namespace Enjin {
 namespace ECS {
 
-// World - main ECS container
+/**
+ * @brief The World class manages the entire ECS state
+ * 
+ * It acts as the container for all entities, components, and systems.
+ * It provides methods to create/destroy entities and access components.
+ */
 class ENJIN_API World {
 public:
     World();
     ~World();
 
-    // Entity management
+    /**
+     * @brief Create a new entity
+     * @return The created Entity handle
+     */
     Entity CreateEntity();
+
+    /**
+     * @brief Destroy an entity and all its components
+     * @param entity The entity to destroy
+     */
     void DestroyEntity(Entity entity);
+
+    /**
+     * @brief Check if an entity is valid
+     * @param entity The entity to check
+     * @return true if valid, false otherwise
+     */
     bool IsValid(Entity entity) const;
 
     // Component management
@@ -74,19 +100,31 @@ public:
         return m_SystemManager->RegisterSystem<T>(std::forward<Args>(args)...);
     }
 
+    /**
+     * @brief Update the world state
+     * @param deltaTime Time elapsed since last frame in seconds
+     */
     void Update(f32 deltaTime);
 
+    /**
+     * @brief Clear all entities and components
+     */
     void Clear(); // Clear all entities and components
 
 private:
     // Type-erased component storage wrapper
     struct StorageBase {
         virtual ~StorageBase() = default;
+        virtual void Remove(Entity entity) = 0;
     };
 
     template<typename T>
     struct StorageWrapper : public StorageBase {
         ComponentStorage<T> storage;
+        
+        void Remove(Entity entity) override {
+            storage.Remove(entity);
+        }
     };
 
     template<typename T>

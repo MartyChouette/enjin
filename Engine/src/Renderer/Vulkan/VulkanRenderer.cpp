@@ -5,6 +5,13 @@
 #include <GLFW/glfw3.h>
 #include <array>
 
+/**
+ * @file VulkanRenderer.cpp
+ * @brief Implementation of VulkanRenderer class
+ * @author Enjin Engine Team
+ * @date 2025
+ */
+
 namespace Enjin {
 namespace Renderer {
 
@@ -331,6 +338,11 @@ void VulkanRenderer::SubmitCommandBuffer() {
 }
 
 void VulkanRenderer::BeginFrame() {
+    if (m_IsFrameStarted) {
+        ENJIN_LOG_WARN(Renderer, "BeginFrame called while frame already in progress");
+        return;
+    }
+
     if (!AcquireNextImage()) {
         return;
     }
@@ -342,6 +354,8 @@ void VulkanRenderer::BeginFrame() {
         ENJIN_LOG_ERROR(Renderer, "Failed to begin recording command buffer");
         return;
     }
+
+    m_IsFrameStarted = true;
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -361,6 +375,11 @@ void VulkanRenderer::BeginFrame() {
 }
 
 void VulkanRenderer::EndFrame() {
+    if (!m_IsFrameStarted) {
+        ENJIN_LOG_WARN(Renderer, "EndFrame called without matching BeginFrame");
+        return;
+    }
+
     vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
 
     if (vkEndCommandBuffer(m_CommandBuffers[m_CurrentFrame]) != VK_SUCCESS) {
@@ -369,6 +388,7 @@ void VulkanRenderer::EndFrame() {
     }
 
     SubmitCommandBuffer();
+    m_IsFrameStarted = false;
 }
 
 VkCommandBuffer VulkanRenderer::GetCurrentCommandBuffer() const {

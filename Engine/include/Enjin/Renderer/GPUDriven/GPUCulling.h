@@ -43,6 +43,8 @@ struct CullableObject {
 
 // GPU frustum culling system
 // INNOVATION: Move culling to GPU, reducing CPU overhead
+class VulkanBuffer; // Forward declaration
+
 class ENJIN_API GPUCullingSystem {
 public:
     GPUCullingSystem(VulkanContext* context);
@@ -88,9 +90,6 @@ private:
     VkPipeline m_CullPipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
-    
-    // Forward declaration
-    class VulkanBuffer;
     
     // Buffers
     std::unique_ptr<VulkanBuffer> m_ObjectBuffer;      // Input: Objects to cull

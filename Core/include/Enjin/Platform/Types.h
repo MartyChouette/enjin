@@ -31,6 +31,6 @@ using char16 = char16_t;
 using char32 = char32_t;
 
 // Null pointer
-constexpr std::nullptr_t nullptr = nullptr;
+// constexpr std::nullptr_t nullptr = nullptr;
 
 } // namespace Enjin

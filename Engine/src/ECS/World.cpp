@@ -1,6 +1,13 @@
 #include "Enjin/ECS/World.h"
 #include "Enjin/Logging/Log.h"
 
+/**
+ * @file World.cpp
+ * @brief Implementation of World class
+ * @author Enjin Engine Team
+ * @date 2025
+ */
+
 namespace Enjin {
 namespace ECS {
 
@@ -23,8 +30,11 @@ void World::DestroyEntity(Entity entity) {
 
     m_SystemManager->OnEntityRemoved(entity);
 
-    // Remove all components
-    // Note: This is simplified - in production you'd iterate through storages
+    // Remove components from all storages
+    for (auto& [typeId, storage] : m_ComponentStorages) {
+        storage->Remove(entity);
+    }
+
     m_EntityManager.DestroyEntity(entity);
 }
 

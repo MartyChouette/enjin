@@ -4,6 +4,7 @@
 #include "Enjin/Renderer/Vulkan/VulkanContext.h"
 #include "Enjin/Renderer/Vulkan/VulkanShader.h"
 #include "Enjin/Math/Vector.h"
+#include "Enjin/Math/Matrix.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <memory>

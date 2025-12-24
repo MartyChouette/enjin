@@ -9,6 +9,9 @@
 namespace Enjin {
 namespace Renderer {
 
+// Forward declarations
+class VulkanImage;
+
 // Bindless resource handle
 using BindlessHandle = u32;
 constexpr BindlessHandle INVALID_BINDLESS_HANDLE = UINT32_MAX;
