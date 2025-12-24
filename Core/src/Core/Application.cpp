@@ -2,13 +2,12 @@
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Platform/Window.h"
 #include <chrono>
+#include <iostream>
 
 namespace Enjin {
 
 extern Window* CreateWindow(const WindowDesc& desc);
 extern void DestroyWindow(Window* window);
-
-namespace Enjin {
 
 Application::Application() {
 }
@@ -29,9 +28,8 @@ int Application::Run() {
 }
 
 void Application::InitializeEngine() {
-    ENJIN_LOG_INFO(Core, "Initializing Enjin Engine...");
-    
     Logger::Get().Initialize();
+    ENJIN_LOG_INFO(Core, "Initializing Enjin Engine...");
     
     // Create window
     WindowDesc windowDesc;
@@ -42,6 +40,7 @@ void Application::InitializeEngine() {
     
     if (!m_Window) {
         ENJIN_LOG_FATAL(Core, "Failed to create window");
+        std::cerr << "CRITICAL ERROR: Failed to create window!" << std::endl;
         m_Running = false;
         return;
     }

@@ -3,6 +3,7 @@
 #include "Enjin/Core/Assert.h"
 #include <set>
 #include <string>
+#include <cstring>
 #include <GLFW/glfw3.h>
 
 namespace Enjin {
@@ -12,6 +13,8 @@ namespace Renderer {
 const std::vector<const char*> VALIDATION_LAYERS = {
     "VK_LAYER_KHRONOS_validation"
 };
+#else
+const std::vector<const char*> VALIDATION_LAYERS = {};
 #endif
 
 VulkanContext::VulkanContext() {
@@ -228,6 +231,21 @@ u32 VulkanContext::FindPresentQueueFamily(VkSurfaceKHR surface) const {
 void VulkanContext::SetPresentQueueFamily(u32 queueFamily) {
     m_PresentQueueFamily = queueFamily;
     vkGetDeviceQueue(m_Device, queueFamily, 0, &m_PresentQueue);
+}
+
+u32 VulkanContext::FindMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memProperties);
+
+    for (u32 i = 0; i < memProperties.memoryTypeCount; ++i) {
+        if ((typeFilter & (1 << i)) &&
+            (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    ENJIN_LOG_ERROR(Renderer, "Failed to find suitable memory type");
+    return UINT32_MAX;
 }
 
 std::vector<const char*> VulkanContext::GetRequiredExtensions() const {

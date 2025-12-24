@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Enjin/Platform/Platform.h"
-#include "Enjin/Math/Vector.h"
+#include "Enjin/Renderer/Vulkan/VulkanContext.h"
 #include <vulkan/vulkan.h>
-#include <string>
 #include <vector>
+#include <string>
 #include <unordered_map>
 #include <memory>
 #include <functional>
@@ -13,98 +13,162 @@ namespace Enjin {
 namespace Renderer {
 
 // Forward declarations
-class RenderGraph;
-class RenderPassNode;
-class ResourceNode;
+class VulkanRenderer;
 
-// Resource types
+// Resource handle in render graph
+using ResourceHandle = u32;
+constexpr ResourceHandle INVALID_RESOURCE_HANDLE = UINT32_MAX;
+
+// Resource type
 enum class ResourceType {
-    Texture,
+    Image,
     Buffer,
     Attachment
 };
 
-// Resource description
-struct ResourceDesc {
-    ResourceType type = ResourceType::Texture;
-    Math::Vector2 size = Math::Vector2(1920, 1080);
-    VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-    u32 mipLevels = 1;
-    u32 arrayLayers = 1;
-    VkImageUsageFlags usage = 0;
-    bool persistent = false; // If false, resource is created/destroyed per frame
+// Resource usage
+enum class ResourceUsage {
+    ColorAttachment,
+    DepthAttachment,
+    SampledImage,
+    StorageImage,
+    UniformBuffer,
+    StorageBuffer,
+    TransferSrc,
+    TransferDst
 };
 
-// Render pass description
-struct RenderPassDesc {
-    std::string name;
-    std::vector<std::string> inputResources;   // Resources this pass reads
-    std::vector<std::string> outputResources;   // Resources this pass writes
-    std::function<void(VkCommandBuffer, const RenderPassDesc&)> execute;
+// Resource state
+struct ResourceState {
+    VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkAccessFlags accessFlags = 0;
+    VkPipelineStageFlags stageFlags = 0;
+};
+
+// Render pass node in graph
+class RenderPassNode {
+public:
+    RenderPassNode(const std::string& name);
+    
+    void AddColorInput(ResourceHandle handle);
+    void AddColorOutput(ResourceHandle handle);
+    void AddDepthInput(ResourceHandle handle);
+    void AddDepthOutput(ResourceHandle handle);
+    void AddSampledImage(ResourceHandle handle);
+    void AddStorageImage(ResourceHandle handle);
+    void AddUniformBuffer(ResourceHandle handle);
+    void AddStorageBuffer(ResourceHandle handle);
+    
+    void SetExecuteCallback(std::function<void(VkCommandBuffer)> callback);
+    
+    const std::string& GetName() const { return m_Name; }
+    const std::vector<ResourceHandle>& GetInputs() const { return m_Inputs; }
+    const std::vector<ResourceHandle>& GetOutputs() const { return m_Outputs; }
+    const std::vector<ResourceHandle>& GetSampledImages() const { return m_SampledImages; }
+    const std::vector<ResourceHandle>& GetStorageImages() const { return m_StorageImages; }
+    const std::vector<ResourceHandle>& GetUniformBuffers() const { return m_UniformBuffers; }
+    const std::vector<ResourceHandle>& GetStorageBuffers() const { return m_StorageBuffers; }
+    
+    void Execute(VkCommandBuffer cmd) const;
+    
+    u32 GetOrder() const { return m_Order; }
+    void SetOrder(u32 order) { m_Order = order; }
+
+private:
+    std::string m_Name;
+    std::vector<ResourceHandle> m_Inputs;
+    std::vector<ResourceHandle> m_Outputs;
+    std::vector<ResourceHandle> m_SampledImages;
+    std::vector<ResourceHandle> m_StorageImages;
+    std::vector<ResourceHandle> m_UniformBuffers;
+    std::vector<ResourceHandle> m_StorageBuffers;
+    std::function<void(VkCommandBuffer)> m_ExecuteCallback;
+    u32 m_Order = 0;
+};
+
+// Resource node in graph
+class ResourceNode {
+public:
+    ResourceNode(const std::string& name, ResourceType type);
+    
+    void SetImage(VkImage image, VkFormat format, u32 width, u32 height);
+    void SetBuffer(VkBuffer buffer, VkDeviceSize size);
+    
+    ResourceHandle GetHandle() const { return m_Handle; }
+    void SetHandle(ResourceHandle handle) { m_Handle = handle; }
+    
+    const std::string& GetName() const { return m_Name; }
+    ResourceType GetType() const { return m_Type; }
+    
+    VkImage GetImage() const { return m_Image; }
+    VkBuffer GetBuffer() const { return m_Buffer; }
+    VkFormat GetFormat() const { return m_Format; }
+    u32 GetWidth() const { return m_Width; }
+    u32 GetHeight() const { return m_Height; }
+    VkDeviceSize GetSize() const { return m_Size; }
+    
+    ResourceState GetCurrentState() const { return m_CurrentState; }
+    void SetCurrentState(const ResourceState& state) { m_CurrentState = state; }
+
+private:
+    std::string m_Name;
+    ResourceType m_Type;
+    ResourceHandle m_Handle = INVALID_RESOURCE_HANDLE;
+    
+    VkImage m_Image = VK_NULL_HANDLE;
+    VkBuffer m_Buffer = VK_NULL_HANDLE;
+    VkFormat m_Format = VK_FORMAT_UNDEFINED;
+    u32 m_Width = 0;
+    u32 m_Height = 0;
+    VkDeviceSize m_Size = 0;
+    
+    ResourceState m_CurrentState;
 };
 
 // Render graph - automatic pass ordering and resource management
-// INNOVATION: Declarative rendering - describe what you want, graph figures out how
 class ENJIN_API RenderGraph {
 public:
     RenderGraph(VulkanContext* context);
     ~RenderGraph();
 
-    bool Initialize();
-    void Shutdown();
-
-    // Register a resource
-    void RegisterResource(const std::string& name, const ResourceDesc& desc);
-
-    // Add a render pass
-    void AddRenderPass(const RenderPassDesc& desc);
-
-    // Compile graph (resolve dependencies, create resources)
-    bool Compile();
-
-    // Execute graph (run all passes in correct order)
-    bool Execute(VkCommandBuffer commandBuffer);
-
+    // Add resource
+    ResourceHandle AddResource(const std::string& name, ResourceType type);
+    ResourceNode* GetResource(ResourceHandle handle);
+    
+    // Add render pass
+    RenderPassNode* AddRenderPass(const std::string& name);
+    
+    // Build graph (resolve dependencies, order passes)
+    bool Build();
+    
+    // Execute graph (record commands)
+    void Execute(VkCommandBuffer cmd);
+    
+    // Clear graph
+    void Clear();
+    
     // Get resource by name
-    VkImage GetImage(const std::string& name) const;
-    VkImageView GetImageView(const std::string& name) const;
-    VkBuffer GetBuffer(const std::string& name) const;
-
-    // Debug visualization
-    void DumpGraph(const std::string& filepath) const;
+    ResourceHandle GetResourceHandle(const std::string& name) const;
 
 private:
-    struct ResourceNode {
-        std::string name;
-        ResourceDesc desc;
-        VkImage image = VK_NULL_HANDLE;
-        VkImageView imageView = VK_NULL_HANDLE;
-        VkBuffer buffer = VK_NULL_HANDLE;
-        VkDeviceMemory memory = VK_NULL_HANDLE;
-        std::vector<RenderPassNode*> readers;
-        std::vector<RenderPassNode*> writers;
-        u32 refCount = 0;
-    };
-
-    struct RenderPassNode {
-        RenderPassDesc desc;
-        std::vector<ResourceNode*> inputs;
-        std::vector<ResourceNode*> outputs;
-        u32 executionOrder = 0;
-        bool executed = false;
-    };
-
+    // Dependency resolution
     void ResolveDependencies();
     void TopologicalSort();
-    void CreateResources();
-    void DestroyResources();
+    
+    // Barrier insertion
     void InsertBarriers(VkCommandBuffer cmd, RenderPassNode* pass);
-
+    VkImageMemoryBarrier CreateImageBarrier(ResourceNode* resource, ResourceState oldState, ResourceState newState);
+    VkBufferMemoryBarrier CreateBufferBarrier(ResourceNode* resource, ResourceState oldState, ResourceState newState);
+    
+    // State tracking
+    ResourceState GetRequiredState(ResourceUsage usage, bool isInput);
+    
     VulkanContext* m_Context = nullptr;
-    std::unordered_map<std::string, std::unique_ptr<ResourceNode>> m_Resources;
+    std::vector<std::unique_ptr<ResourceNode>> m_Resources;
     std::vector<std::unique_ptr<RenderPassNode>> m_Passes;
-    std::vector<RenderPassNode*> m_ExecutionOrder;
-    bool m_Compiled = false;
+    std::unordered_map<std::string, ResourceHandle> m_ResourceNameMap;
+    std::vector<RenderPassNode*> m_OrderedPasses;
+    bool m_Built = false;
 };
 
 } // namespace Renderer

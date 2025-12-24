@@ -330,43 +330,55 @@ bool GPUCullingSystem::CreateComputePipeline() {
         return false;
     }
 
-    // Load compute shader
+    // Load compute shader - try multiple paths
     VulkanShader computeShader(m_Context);
     
-    // Try to load compiled SPIR-V
+    const char* shaderPaths[] = {
+        "shaders/cull.comp.spv",
+        "Engine/shaders/cull.comp.spv",
+        "../Engine/shaders/cull.comp.spv",
+        "bin/shaders/cull.comp.spv"
+    };
+    
     bool shaderLoaded = false;
-    if (computeShader.LoadFromFile("shaders/cull.comp.spv")) {
-        shaderLoaded = true;
-    } else {
-        // Fallback: Try loading from ShaderData if available
-        ENJIN_LOG_WARN(Renderer, "Compute shader not found, using CPU fallback culling");
-        // CPU fallback will be used
-    }
-
-    if (shaderLoaded) {
-        // Create compute pipeline
-        VkComputePipelineCreateInfo pipelineInfo{};
-        pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-        pipelineInfo.layout = m_PipelineLayout;
-        
-        VkPipelineShaderStageCreateInfo shaderStage{};
-        shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-        shaderStage.module = computeShader.GetModule();
-        shaderStage.pName = "main";
-        pipelineInfo.stage = shaderStage;
-
-        result = vkCreateComputePipelines(
-            m_Context->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_CullPipeline);
-        if (result != VK_SUCCESS) {
-            ENJIN_LOG_ERROR(Renderer, "Failed to create compute pipeline: %d", result);
-            return false;
+    for (const char* path : shaderPaths) {
+        if (computeShader.LoadFromFile(path)) {
+            if (computeShader.GetModule() != VK_NULL_HANDLE) {
+                shaderLoaded = true;
+                ENJIN_LOG_INFO(Renderer, "Loaded compute shader from: %s", path);
+                break;
+            }
         }
-
-        ENJIN_LOG_INFO(Renderer, "GPU Culling compute pipeline created successfully");
-    } else {
-        ENJIN_LOG_WARN(Renderer, "GPU Culling will use CPU fallback until compute shader is compiled");
     }
+
+    if (!shaderLoaded) {
+        ENJIN_LOG_WARN(Renderer, "Compute shader not found at any path, GPU culling will use CPU fallback");
+        ENJIN_LOG_INFO(Renderer, "To enable GPU culling, compile: glslc Engine/shaders/cull.comp -o Engine/shaders/cull.comp.spv");
+        // Continue without GPU pipeline - CPU fallback will be used
+        return true; // Return true so system can still be used with CPU fallback
+    }
+
+    // Create compute pipeline
+    VkComputePipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    pipelineInfo.layout = m_PipelineLayout;
+    
+    VkPipelineShaderStageCreateInfo shaderStage{};
+    shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderStage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    shaderStage.module = computeShader.GetModule();
+    shaderStage.pName = "main";
+    pipelineInfo.stage = shaderStage;
+
+    result = vkCreateComputePipelines(
+        m_Context->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_CullPipeline);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create compute pipeline: %d", result);
+        ENJIN_LOG_WARN(Renderer, "GPU Culling will use CPU fallback");
+        return true; // Allow CPU fallback
+    }
+
+    ENJIN_LOG_INFO(Renderer, "GPU Culling compute pipeline created successfully");
 
     return true;
 }

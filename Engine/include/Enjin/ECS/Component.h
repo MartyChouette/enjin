@@ -4,6 +4,7 @@
 #include "Enjin/ECS/Entity.h"
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 
 namespace Enjin {
 namespace ECS {

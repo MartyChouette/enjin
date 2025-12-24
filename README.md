@@ -56,12 +56,21 @@ EnjinEngine/
 
 ### Build Instructions
 
+**Linux:**
 ```bash
-mkdir build
-cd build
-cmake ..
-cmake --build .
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . -j$(nproc)
 ```
+
+**Windows:**
+```cmd
+mkdir build && cd build
+cmake .. -G "Visual Studio 16 2019" -A x64
+cmake --build . --config Release
+```
+
+**See [WINDOWS_BUILD.md](docs/WINDOWS_BUILD.md) for detailed Windows instructions.**
 
 ### Build Options
 - `ENJIN_BUILD_EDITOR=ON` - Build the editor (default: ON)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Enjin/Platform/Platform.h"
+#include "Enjin/Platform/Types.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 
@@ -27,6 +28,9 @@ public:
     // Find present queue family for a surface
     u32 FindPresentQueueFamily(VkSurfaceKHR surface) const;
     void SetPresentQueueFamily(u32 queueFamily);
+    
+    // Find memory type for allocation
+    u32 FindMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const;
 
 protected:
     friend class VulkanRenderer;

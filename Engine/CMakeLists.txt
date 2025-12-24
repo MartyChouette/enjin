@@ -24,9 +24,19 @@ target_compile_features(EnjinEngine PUBLIC cxx_std_20)
 find_package(Vulkan REQUIRED)
 target_link_libraries(EnjinEngine PUBLIC Vulkan::Vulkan)
 
-# Find GLFW (for windowing - permissive license)
-find_package(glfw3 REQUIRED)
-target_link_libraries(EnjinEngine PUBLIC glfw)
+# GLFW is already linked via EnjinCore, no need to link again
+# But we can verify it's available
+if(TARGET glfw)
+    message(STATUS "GLFW found via EnjinCore")
+elseif(TARGET glfw3)
+    message(STATUS "GLFW3 found")
+else()
+    # GLFW should be found by Core, but check anyway
+    find_package(glfw3 QUIET)
+    if(glfw3_FOUND)
+        target_link_libraries(EnjinEngine PUBLIC glfw)
+    endif()
+endif()
 
 # Optional: Find shaderc for shader compilation
 # find_package(shaderc REQUIRED)

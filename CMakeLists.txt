@@ -5,6 +5,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Platform detection
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    message(STATUS "Building for Windows")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(STATUS "Building for Linux")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    message(STATUS "Building for macOS")
+endif()
+
 # Build options
 option(ENJIN_BUILD_EDITOR "Build the Enjin Editor" ON)
 option(ENJIN_BUILD_TESTS "Build unit tests" OFF)

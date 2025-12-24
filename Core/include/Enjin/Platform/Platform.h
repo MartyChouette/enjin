@@ -2,12 +2,16 @@
 
 // Platform detection
 #if defined(_WIN32) || defined(_WIN64)
-    #define ENJIN_PLATFORM_WINDOWS
+    #ifndef ENJIN_PLATFORM_WINDOWS
+        #define ENJIN_PLATFORM_WINDOWS
+    #endif
     #ifndef NOMINMAX
         #define NOMINMAX
     #endif
 #elif defined(__linux__)
-    #define ENJIN_PLATFORM_LINUX
+    #ifndef ENJIN_PLATFORM_LINUX
+        #define ENJIN_PLATFORM_LINUX
+    #endif
 #elif defined(__APPLE__)
     #define ENJIN_PLATFORM_MACOS
     #define ENJIN_PLATFORM_POSIX
@@ -27,10 +31,12 @@
 #endif
 
 // Debug/Release detection
-#if defined(NDEBUG) || defined(_RELEASE)
-    #define ENJIN_BUILD_RELEASE
-#else
-    #define ENJIN_BUILD_DEBUG
+#if !defined(ENJIN_BUILD_RELEASE) && !defined(ENJIN_BUILD_DEBUG)
+    #if defined(NDEBUG) || defined(_RELEASE)
+        #define ENJIN_BUILD_RELEASE
+    #else
+        #define ENJIN_BUILD_DEBUG
+    #endif
 #endif
 
 // Export macros for DLL

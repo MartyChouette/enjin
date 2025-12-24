@@ -5,8 +5,10 @@
 1. **[README.md](../README.md)** - Project overview and quick start
 2. **[INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md)** - ⚠️ **UP-TO-DATE** dependency installation guide
 3. **[BUILD.md](BUILD.md)** - Detailed build instructions
-4. **[MINIMAL_SETUP.md](MINIMAL_SETUP.md)** - Minimal setup if packages aren't available
-5. **[GETTING_STARTED.md](GETTING_STARTED.md)** - Step-by-step getting started guide
+4. **[WINDOWS_BUILD.md](WINDOWS_BUILD.md)** - Building for Windows 11
+5. **[CROSS_COMPILATION.md](CROSS_COMPILATION.md)** - Cross-compiling from Linux to Windows
+6. **[MINIMAL_SETUP.md](MINIMAL_SETUP.md)** - Minimal setup if packages aren't available
+7. **[GETTING_STARTED.md](GETTING_STARTED.md)** - Step-by-step getting started guide
 
 ## 📋 Quick Reference
 

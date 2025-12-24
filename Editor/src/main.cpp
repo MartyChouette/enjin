@@ -1,5 +1,6 @@
 #include "Enjin/Core/Application.h"
 #include "Enjin/Logging/Log.h"
+#include <iostream>
 
 // Editor application
 class EditorApplication : public Enjin::Application {
@@ -12,7 +13,7 @@ public:
         ENJIN_LOG_INFO(Editor, "Enjin Editor shutting down...");
     }
 
-    void Update(f32 deltaTime) override {
+    void Update(Enjin::f32 deltaTime) override {
         (void)deltaTime;
         // Editor update logic
     }
@@ -34,5 +35,9 @@ int main(int argc, char* argv[]) {
     Enjin::Application* app = CreateApplication();
     int result = app->Run();
     delete app;
+
+    std::cout << "Application exited with code " << result << ". Press Enter to close..." << std::endl;
+    std::cin.get();
+
     return result;
 }

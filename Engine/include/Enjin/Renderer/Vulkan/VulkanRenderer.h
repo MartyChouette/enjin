@@ -6,20 +6,50 @@
 #include "Enjin/Renderer/Vulkan/VulkanSwapchain.h"
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <memory>
+
+/**
+ * @file VulkanRenderer.h
+ * @brief Main Vulkan rendering interface
+ * @author Enjin Engine Team
+ * @date 2025
+ */
 
 namespace Enjin {
 namespace Renderer {
 
-// Vulkan renderer - main rendering interface
+/**
+ * @brief Vulkan renderer - main rendering interface
+ * 
+ * Manages the Vulkan rendering state, swapchain, and command buffers.
+ */
 class ENJIN_API VulkanRenderer {
 public:
     VulkanRenderer();
     ~VulkanRenderer();
 
+    /**
+     * @brief Initialize the renderer
+     * @param window Pointer to the window to render to
+     * @return true if initialization succeeded, false otherwise
+     */
     bool Initialize(Window* window);
+
+    /**
+     * @brief Shutdown the renderer
+     */
     void Shutdown();
 
+    /**
+     * @brief Begin a new frame
+     * Acquire next image and begin command buffer recording
+     */
     void BeginFrame();
+
+    /**
+     * @brief End the current frame
+     * End command buffer recording and submit to queue
+     */
     void EndFrame();
 
     VkCommandBuffer GetCurrentCommandBuffer() const;
@@ -57,6 +87,8 @@ private:
     u32 m_CurrentFrame = 0;
     u32 m_CurrentImageIndex = 0;
     static constexpr u32 MAX_FRAMES_IN_FLIGHT = 2;
+
+    bool m_IsFrameStarted = false;
 };
 
 } // namespace Renderer
