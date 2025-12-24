@@ -9,6 +9,9 @@
 namespace Enjin {
 namespace Renderer {
 
+// Forward declaration
+class VulkanContext;
+
 // Buffer usage flags
 enum class BufferUsage {
     Vertex = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -16,7 +19,8 @@ enum class BufferUsage {
     Uniform = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
     Storage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
     TransferSrc = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    TransferDst = VK_BUFFER_USAGE_TRANSFER_DST_BIT
+    TransferDst = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+    IndirectDraw = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT
 };
 
 // Vulkan buffer wrapper
@@ -26,6 +30,7 @@ public:
     ~VulkanBuffer();
 
     bool Create(usize size, BufferUsage usage, bool hostVisible = false);
+    bool Create(usize size, VkBufferUsageFlags usageFlags, bool hostVisible = false);
     void Destroy();
 
     bool UploadData(const void* data, usize size, usize offset = 0);
@@ -44,7 +49,7 @@ private:
     VkBuffer m_Buffer = VK_NULL_HANDLE;
     VkDeviceMemory m_Memory = VK_NULL_HANDLE;
     usize m_Size = 0;
-    BufferUsage m_Usage = BufferUsage::Vertex;
+    VkBufferUsageFlags m_UsageFlags = 0;
     bool m_HostVisible = false;
     void* m_MappedData = nullptr;
 };

@@ -15,14 +15,18 @@ VulkanBuffer::~VulkanBuffer() {
 }
 
 bool VulkanBuffer::Create(usize size, BufferUsage usage, bool hostVisible) {
+    return Create(size, static_cast<VkBufferUsageFlags>(usage), hostVisible);
+}
+
+bool VulkanBuffer::Create(usize size, VkBufferUsageFlags usageFlags, bool hostVisible) {
     m_Size = size;
-    m_Usage = usage;
+    m_UsageFlags = usageFlags;
     m_HostVisible = hostVisible;
 
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
-    bufferInfo.usage = static_cast<VkBufferUsageFlags>(usage);
+    bufferInfo.usage = usageFlags;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VkResult result = vkCreateBuffer(m_Context->GetDevice(), &bufferInfo, nullptr, &m_Buffer);

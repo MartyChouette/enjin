@@ -4,18 +4,21 @@
 #include "Enjin/Renderer/Vulkan/VulkanContext.h"
 #include "Enjin/Math/Matrix.h"
 #include "Enjin/Math/Vector.h"
+#include "Enjin/Memory/Memory.h"
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <memory>
+#include <cfloat>
 
 namespace Enjin {
 namespace Renderer {
 
 // Bounding box for GPU culling
-struct BoundingBox {
+struct ENJIN_API BoundingBox {
     Math::Vector3 min;
     Math::Vector3 max;
     
-    BoundingBox() : min(Math::Vector3(FLT_MAX)), max(Math::Vector3(-FLT_MAX)) {}
+    BoundingBox() : min(Math::Vector3(1e30f)), max(Math::Vector3(-1e30f)) {}
     BoundingBox(const Math::Vector3& min, const Math::Vector3& max) : min(min), max(max) {}
     
     Math::Vector3 GetCenter() const {
@@ -79,6 +82,9 @@ private:
     VkPipeline m_CullPipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
+    
+    // Forward declaration
+    class VulkanBuffer;
     
     // Buffers
     std::unique_ptr<VulkanBuffer> m_ObjectBuffer;      // Input: Objects to cull

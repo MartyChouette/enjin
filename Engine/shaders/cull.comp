@@ -1,0 +1,119 @@
+#version 450
+
+// GPU Frustum Culling Compute Shader
+// INNOVATION: Move culling to GPU for massive performance gains
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+// Input: Objects to cull
+struct CullableObject {
+    vec4 boundsMin;      // xyz = min, w = unused
+    vec4 boundsMax;      // xyz = max, w = unused
+    mat4 transform;      // Object transform
+    uint meshIndex;
+    uint materialIndex;
+    uint indexCount;
+    uint indexOffset;
+    uint vertexOffset;
+};
+
+layout(set = 0, binding = 0) readonly buffer ObjectBuffer {
+    CullableObject objects[];
+};
+
+// Output: Indirect draw commands
+struct DrawCommand {
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int vertexOffset;
+    uint firstInstance;
+};
+
+layout(set = 0, binding = 1) writeonly buffer IndirectDrawBuffer {
+    DrawCommand drawCommands[];
+};
+
+// Frustum planes
+layout(set = 0, binding = 2) uniform FrustumBuffer {
+    vec4 frustumPlanes[6]; // left, right, bottom, top, near, far
+};
+
+// Visibility flags
+layout(set = 0, binding = 3) writeonly buffer VisibilityBuffer {
+    uint visibility[];
+};
+
+// Check if AABB is inside frustum
+bool IsAABBVisible(vec3 min, vec3 max, mat4 transform) {
+    // Transform AABB corners to world space
+    vec3 corners[8];
+    corners[0] = vec3(transform * vec4(min.x, min.y, min.z, 1.0));
+    corners[1] = vec3(transform * vec4(max.x, min.y, min.z, 1.0));
+    corners[2] = vec3(transform * vec4(min.x, max.y, min.z, 1.0));
+    corners[3] = vec3(transform * vec4(max.x, max.y, min.z, 1.0));
+    corners[4] = vec3(transform * vec4(min.x, min.y, max.z, 1.0));
+    corners[5] = vec3(transform * vec4(max.x, min.y, max.z, 1.0));
+    corners[6] = vec3(transform * vec4(min.x, max.y, max.z, 1.0));
+    corners[7] = vec3(transform * vec4(max.x, max.y, max.z, 1.0));
+
+    // Check against each frustum plane
+    for (int plane = 0; plane < 6; plane++) {
+        bool inside = false;
+        
+        // Check if any corner is inside this plane
+        for (int i = 0; i < 8; i++) {
+            float distance = dot(frustumPlanes[plane].xyz, corners[i]) + frustumPlanes[plane].w;
+            if (distance >= 0.0) {
+                inside = true;
+                break;
+            }
+        }
+        
+        // If all corners are outside any plane, object is culled
+        if (!inside) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    
+    if (index >= objects.length()) {
+        return;
+    }
+    
+    CullableObject obj = objects[index];
+    vec3 boundsMin = obj.boundsMin.xyz;
+    vec3 boundsMax = obj.boundsMax.xyz;
+    
+    // Check visibility
+    bool visible = IsAABBVisible(boundsMin, boundsMax, obj.transform);
+    
+    visibility[index] = visible ? 1u : 0u;
+    
+    if (visible) {
+        // Create indirect draw command
+        DrawCommand cmd;
+        cmd.indexCount = obj.indexCount;
+        cmd.instanceCount = 1;
+        cmd.firstIndex = obj.indexOffset;
+        cmd.vertexOffset = int(obj.vertexOffset);
+        cmd.firstInstance = index;
+        
+        drawCommands[index] = cmd;
+    } else {
+        // Zero out draw command (culled)
+        DrawCommand cmd;
+        cmd.indexCount = 0;
+        cmd.instanceCount = 0;
+        cmd.firstIndex = 0;
+        cmd.vertexOffset = 0;
+        cmd.firstInstance = 0;
+        
+        drawCommands[index] = cmd;
+    }
+}
