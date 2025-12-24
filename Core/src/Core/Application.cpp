@@ -16,15 +16,32 @@ Application::~Application() {
 }
 
 int Application::Run() {
-    InitializeEngine();
-    Initialize();
+    int exitCode = 0;
+    try {
+        InitializeEngine();
+        if (!m_Running || !m_Window) {
+            // Engine init already logged the failure.
+            ShutdownEngine();
+            return 1;
+        }
 
-    MainLoop();
+        Initialize();
+        MainLoop();
+        Shutdown();
+        ShutdownEngine();
+    } catch (const std::exception& e) {
+        ENJIN_LOG_FATAL(Core, "Unhandled exception: %s", e.what());
+        std::cerr << "Unhandled exception: " << e.what() << std::endl;
+        exitCode = 1;
+        ShutdownEngine();
+    } catch (...) {
+        ENJIN_LOG_FATAL(Core, "Unhandled non-standard exception");
+        std::cerr << "Unhandled non-standard exception" << std::endl;
+        exitCode = 1;
+        ShutdownEngine();
+    }
 
-    Shutdown();
-    ShutdownEngine();
-
-    return 0;
+    return exitCode;
 }
 
 void Application::InitializeEngine() {

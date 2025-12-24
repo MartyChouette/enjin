@@ -3,6 +3,7 @@
 #include "Enjin/Renderer/Vulkan/VulkanPipeline.h"
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Core/Assert.h"
+#include <algorithm>
 
 namespace Enjin {
 namespace Renderer {

@@ -117,7 +117,12 @@ Window* CreateWindow(const WindowDesc& desc) {
         glfwInitialized = true;
     }
 
-    return new GLFWWindow(desc);
+    GLFWWindow* window = new GLFWWindow(desc);
+    if (!window->GetGLFWHandle()) {
+        delete window;
+        return nullptr;
+    }
+    return window;
 }
 
 void DestroyWindow(Window* window) {

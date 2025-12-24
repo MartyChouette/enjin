@@ -1,6 +1,10 @@
 #include "Enjin/Core/Application.h"
 #include "Enjin/Logging/Log.h"
 #include <iostream>
+#if !defined(_WIN32)
+    #include <unistd.h>
+    #include <cstdio>
+#endif
 
 // Editor application
 class EditorApplication : public Enjin::Application {
@@ -36,8 +40,14 @@ int main(int argc, char* argv[]) {
     int result = app->Run();
     delete app;
 
-    std::cout << "Application exited with code " << result << ". Press Enter to close..." << std::endl;
-    std::cin.get();
+    std::cout << "Application exited with code " << result << "." << std::endl;
+#if !defined(_WIN32)
+    // Only pause when launched from an interactive terminal.
+    if (isatty(fileno(stdin))) {
+        std::cout << "Press Enter to close..." << std::endl;
+        std::cin.get();
+    }
+#endif
 
     return result;
 }
