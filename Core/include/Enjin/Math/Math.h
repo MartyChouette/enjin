@@ -57,5 +57,9 @@ ENJIN_FORCE_INLINE bool IsEqual(f32 a, f32 b, f32 epsilon = EPSILON) {
     return Abs(a - b) < epsilon;
 }
 
+ENJIN_FORCE_INLINE f32 Sign(f32 value) {
+    return (value > 0.0f) ? 1.0f : ((value < 0.0f) ? -1.0f : 0.0f);
+}
+
 } // namespace Math
 } // namespace Enjin

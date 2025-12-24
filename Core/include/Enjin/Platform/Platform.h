@@ -7,7 +7,9 @@
         #define NOMINMAX
     #endif
 #elif defined(__linux__)
-    #define ENJIN_PLATFORM_LINUX
+    #ifndef ENJIN_PLATFORM_LINUX
+        #define ENJIN_PLATFORM_LINUX
+    #endif
 #elif defined(__APPLE__)
     #define ENJIN_PLATFORM_MACOS
     #define ENJIN_PLATFORM_POSIX

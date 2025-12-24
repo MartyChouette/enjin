@@ -2,6 +2,7 @@
 
 #include "Enjin/Platform/Platform.h"
 #include "Enjin/Math/Vector.h"
+#include <vulkan/vulkan.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -103,6 +104,8 @@ class ENJIN_API MaterialSystem {
 public:
     MaterialSystem();
     ~MaterialSystem();
+
+    void Shutdown();
 
     // Load material from file (JSON)
     u32 LoadMaterial(VulkanContext* context, VkRenderPass renderPass, const std::string& filepath);

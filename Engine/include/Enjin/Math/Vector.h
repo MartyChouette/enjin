@@ -143,5 +143,18 @@ using Vec2 = Vector2;
 using Vec3 = Vector3;
 using Vec4 = Vector4;
 
+// Interpolation functions
+ENJIN_FORCE_INLINE Vector2 Lerp(const Vector2& a, const Vector2& b, f32 t) {
+    return a + (b - a) * Clamp(t, 0.0f, 1.0f);
+}
+
+ENJIN_FORCE_INLINE Vector3 Lerp(const Vector3& a, const Vector3& b, f32 t) {
+    return a + (b - a) * Clamp(t, 0.0f, 1.0f);
+}
+
+ENJIN_FORCE_INLINE Vector4 Lerp(const Vector4& a, const Vector4& b, f32 t) {
+    return a + (b - a) * Clamp(t, 0.0f, 1.0f);
+}
+
 } // namespace Math
 } // namespace Enjin
