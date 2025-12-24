@@ -1,59 +1,67 @@
 # Documentation Index
 
-## Getting Started
+## 🚀 Getting Started
 
-1. **[README](../README.md)** - Project overview and quick start
-2. **[Build Instructions](BUILD.md)** - How to build the engine
-3. **[Architecture](ARCHITECTURE.md)** - System architecture overview
+1. **[README.md](../README.md)** - Project overview and quick start
+2. **[INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md)** - ⚠️ **UP-TO-DATE** dependency installation guide
+3. **[BUILD.md](BUILD.md)** - Detailed build instructions
+4. **[MINIMAL_SETUP.md](MINIMAL_SETUP.md)** - Minimal setup if packages aren't available
+5. **[GETTING_STARTED.md](GETTING_STARTED.md)** - Step-by-step getting started guide
 
-## Core Systems
+## 📋 Quick Reference
 
-4. **[3D Rendering](3D_RENDERING.md)** - Complete 3D rendering pipeline
-5. **[ECS System](ECS_SYSTEM.md)** - Entity Component System
-6. **[Vulkan Setup](VULKAN_SETUP.md)** - Vulkan integration details
+- **[QUICK_FIX.md](QUICK_FIX.md)** - Quick fixes for common issues
+- **[STATUS.md](STATUS.md)** - Current implementation status
+- **[COMPILATION_CHECKLIST.md](COMPILATION_CHECKLIST.md)** - Build verification checklist
 
-## Advanced Features
+## 🏗️ Architecture & Design
 
-7. **[GPU Culling](GPU_CULLING_COMPLETE.md)** - GPU-driven frustum culling
-8. **[Bindless Resources](BINDLESS_IMPLEMENTATION.md)** - Bindless rendering
-9. **[Extensible Rendering](EXTENSIBLE_RENDERING.md)** - Pipeline hooks and hot-reload
-10. **[Rendering Techniques](COMPLETE_SYSTEM_GUIDE.md#rendering-techniques)** - Technique switching
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture overview
+- **[COMPLETE_SYSTEM_GUIDE.md](COMPLETE_SYSTEM_GUIDE.md)** - How to use all systems together
+- **[CODING_STANDARDS.md](CODING_STANDARDS.md)** - Coding style and documentation standards
 
-## Game Systems
+## 🎮 Systems Documentation
 
-11. **[Complete System Guide](COMPLETE_SYSTEM_GUIDE.md)** - All systems together
-12. **[Systems Overview](SYSTEMS_OVERVIEW.md)** - System list and status
-13. **[Day/Night Cycle](COMPLETE_SYSTEM_GUIDE.md#daynight-cycle)** - Time system
-14. **[Weather System](COMPLETE_SYSTEM_GUIDE.md#weather-system)** - Weather effects
-15. **[Physics](COMPLETE_SYSTEM_GUIDE.md#physics-system)** - Physics engine
-16. **[Water Rendering](COMPLETE_SYSTEM_GUIDE.md#water-system)** - Water system
-17. **[Shader GUI](COMPLETE_SYSTEM_GUIDE.md#shader-gui)** - GUI system
+### Rendering
+- **[3D_RENDERING.md](3D_RENDERING.md)** - 3D rendering pipeline
+- **[VULKAN_SETUP.md](VULKAN_SETUP.md)** - Vulkan integration details
+- **[EXTENSIBLE_RENDERING.md](EXTENSIBLE_RENDERING.md)** - Extensible rendering pipeline
+- **[USAGE_EXAMPLES.md](USAGE_EXAMPLES.md)** - Code examples for rendering
+- **[SHADER_COMPILATION.md](SHADER_COMPILATION.md)** - Shader compilation guide
 
-## Development
+### Advanced Rendering
+- **[BINDLESS_IMPLEMENTATION.md](BINDLESS_IMPLEMENTATION.md)** - Bindless resources
+- **[GPU_CULLING_IMPLEMENTATION.md](GPU_CULLING_IMPLEMENTATION.md)** - GPU culling system
+- **[GPU_CULLING_COMPLETE.md](GPU_CULLING_COMPLETE.md)** - Completed GPU culling docs
+- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Integrating bindless and GPU culling
 
-18. **[Top-Tier Roadmap](TOP_TIER_ROADMAP.md)** - Development roadmap
-19. **[Immediate Next Steps](IMMEDIATE_NEXT_STEPS.md)** - What to do next
-20. **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Current status
-21. **[Integration Guide](INTEGRATION_GUIDE.md)** - How to integrate systems
+### Game Systems
+- **[ECS_SYSTEM.md](ECS_SYSTEM.md)** - Entity Component System guide
 
-## Reference
+## 🗺️ Roadmap & Planning
 
-22. **[API Reference](API_REFERENCE.md)** - Complete API documentation
-23. **[Coding Standards](CODING_STANDARDS.md)** - Code style and documentation
-24. **[Usage Examples](USAGE_EXAMPLES.md)** - Code examples
-25. **[Shader Compilation](SHADER_COMPILATION.md)** - Shader setup
+- **[ROADMAP.md](ROADMAP.md)** - Overall development roadmap
+- **[TOP_TIER_ROADMAP.md](TOP_TIER_ROADMAP.md)** - Advanced rendering features roadmap
+- **[IMMEDIATE_NEXT_STEPS.md](IMMEDIATE_NEXT_STEPS.md)** - Immediate next steps
+- **[SYSTEMS_OVERVIEW.md](SYSTEMS_OVERVIEW.md)** - All systems and their status
 
-## Roadmaps
+## 📚 API Reference
 
-26. **[Roadmap](ROADMAP.md)** - Original roadmap
-27. **[Top-Tier Roadmap](TOP_TIER_ROADMAP.md)** - Advanced features roadmap
+- **[API_REFERENCE.md](API_REFERENCE.md)** - API documentation
 
-## Quick Links
+## 🔧 Troubleshooting
 
-- **New to the engine?** Start with [README](../README.md) and [Architecture](ARCHITECTURE.md)
-- **Want to render something?** See [3D Rendering](3D_RENDERING.md)
-- **Need to integrate systems?** See [Complete System Guide](COMPLETE_SYSTEM_GUIDE.md)
-- **Looking for API docs?** See [API Reference](API_REFERENCE.md)
-- **Want to extend the engine?** See [Extensible Rendering](EXTENSIBLE_RENDERING.md)
+- **[QUICK_FIX.md](QUICK_FIX.md)** - Quick fixes
+- **[BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md)** - Build troubleshooting
+- **[MINIMAL_SETUP.md](MINIMAL_SETUP.md)** - Minimal setup guide
 
-All documentation is comprehensive and up-to-date!
+## 📝 Status & Progress
+
+- **[STATUS.md](STATUS.md)** - Current status
+- **[COMPILATION_STATUS.md](COMPILATION_STATUS.md)** - Compilation status
+- **[READY_TO_BUILD.md](READY_TO_BUILD.md)** - Build readiness
+- **[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)** - Implementation status
+
+---
+
+**Start Here**: [INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md) → [BUILD.md](BUILD.md) → [GETTING_STARTED.md](GETTING_STARTED.md)

@@ -1,25 +1,34 @@
 # Build Instructions
 
+## ⚠️ IMPORTANT: See [INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md) for up-to-date dependency installation!
+
 ## Prerequisites
 
 ### Required
 - **CMake** 3.20+
 - **C++20 Compiler** (GCC 10+, Clang 12+, MSVC 2019+)
-- **Vulkan SDK** 1.3+
-- **GLFW3**
+- **Vulkan SDK** 1.3+ (or at least headers)
+- **GLFW3** (for windowing)
+
+### Quick Dependency Check
+
+```bash
+./scripts/check_dependencies.sh
+```
 
 ### Install on Ubuntu/Debian
 
 ```bash
 sudo apt-get update
-sudo apt-get install \
+sudo apt-get install -y \
     build-essential \
     cmake \
     libvulkan-dev \
-    vulkan-tools \
     libglfw3-dev \
     glslang-tools
 ```
+
+**If packages aren't available**, see [INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md) for alternatives.
 
 ## Build Steps
 

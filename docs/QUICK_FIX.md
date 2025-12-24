@@ -12,14 +12,18 @@ The engine has **complete structure** but many implementations are **stubs**. It
 
 ### 1. Fix Build Environment
 
-```bash
-# Install C++ standard library
-sudo apt-get update
-sudo apt-get install build-essential libstdc++-dev g++
+**⚠️ See [INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md) for up-to-date installation instructions!**
 
-# Install Vulkan SDK
-# Download from: https://vulkan.lunarg.com/
-# Install glslc (shader compiler)
+Quick version:
+```bash
+# Check what you have
+./scripts/check_dependencies.sh
+
+# Install dependencies (Ubuntu/Debian)
+sudo apt-get update
+sudo apt-get install -y build-essential cmake libvulkan-dev libglfw3-dev glslang-tools
+
+# If packages aren't available, see INSTALL_DEPENDENCIES.md for alternatives
 ```
 
 ### 2. Create Minimal Working Shader

@@ -75,7 +75,8 @@ The engine has **complete structure and interfaces** but many implementations ar
 ### Step 1: Fix Build Environment
 ```bash
 # Install C++ standard library (if missing)
-sudo apt-get install build-essential libstdc++-dev
+# See INSTALL_DEPENDENCIES.md for up-to-date instructions
+sudo apt-get install build-essential cmake libvulkan-dev libglfw3-dev glslang-tools
 ```
 
 ### Step 2: Compile Shaders

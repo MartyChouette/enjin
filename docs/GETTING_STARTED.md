@@ -4,22 +4,27 @@
 
 ### Step 1: Install Dependencies
 
+**⚠️ IMPORTANT: See [INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md) for detailed, up-to-date instructions!**
+
+Quick check:
 ```bash
-# Install C++ build tools
-sudo apt-get update
-sudo apt-get install build-essential libstdc++-dev g++ cmake
-
-# Install Vulkan SDK
-# Download from: https://vulkan.lunarg.com/
-# Or use package manager:
-sudo apt-get install vulkan-tools libvulkan-dev
-
-# Install GLFW
-sudo apt-get install libglfw3-dev
-
-# Install glslc (shader compiler)
-sudo apt-get install glslang-tools
+./scripts/check_dependencies.sh
 ```
+
+Quick install (Ubuntu/Debian):
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+    build-essential \
+    cmake \
+    libvulkan-dev \
+    libglfw3-dev \
+    glslang-tools
+```
+
+**If packages aren't available**, see:
+- [INSTALL_DEPENDENCIES.md](INSTALL_DEPENDENCIES.md) - Complete guide with alternatives
+- [MINIMAL_SETUP.md](MINIMAL_SETUP.md) - If you can't install everything
 
 ### Step 2: Compile Shaders
 
