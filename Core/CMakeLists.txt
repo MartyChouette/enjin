@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Core library - Foundation components
 file(GLOB_RECURSE CORE_SOURCES
-    "src/*.cpp"
+    "src/**/*.cpp"
     "include/*.h"
     "include/*.hpp"
 )

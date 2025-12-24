@@ -1,8 +1,13 @@
 #include "Enjin/Core/Application.h"
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Platform/Window.h"
+#include "Enjin/Platform/Paths.h"
 #include <chrono>
 #include <iostream>
+
+#if defined(ENJIN_PLATFORM_WINDOWS)
+    #include <Windows.h>
+#endif
 
 namespace Enjin {
 
@@ -45,6 +50,10 @@ int Application::Run() {
 }
 
 void Application::InitializeEngine() {
+    // Make relative paths (like "enjin.log" or shader/assets folders) resolve
+    // next to the executable, even when launched via double-click.
+    Platform::SetWorkingDirectoryToExecutableDirectory();
+
     Logger::Get().Initialize();
     ENJIN_LOG_INFO(Core, "Initializing Enjin Engine...");
     
@@ -58,6 +67,15 @@ void Application::InitializeEngine() {
     if (!m_Window) {
         ENJIN_LOG_FATAL(Core, "Failed to create window");
         std::cerr << "CRITICAL ERROR: Failed to create window!" << std::endl;
+#if defined(ENJIN_PLATFORM_WINDOWS)
+        // If launched as a GUI app (no console), show an error dialog.
+        if (GetConsoleWindow() == nullptr) {
+            MessageBoxA(nullptr,
+                "Failed to create window.\n\nCheck 'enjin.log' next to the executable for details.",
+                "Enjin Fatal Error",
+                MB_OK | MB_ICONERROR);
+        }
+#endif
         m_Running = false;
         return;
     }
