@@ -1,0 +1,158 @@
+#include "Enjin/Renderer/Vulkan/VulkanBuffer.h"
+#include "Enjin/Logging/Log.h"
+#include "Enjin/Core/Assert.h"
+#include <cstring>
+
+namespace Enjin {
+namespace Renderer {
+
+VulkanBuffer::VulkanBuffer(VulkanContext* context)
+    : m_Context(context) {
+}
+
+VulkanBuffer::~VulkanBuffer() {
+    Destroy();
+}
+
+bool VulkanBuffer::Create(usize size, BufferUsage usage, bool hostVisible) {
+    m_Size = size;
+    m_Usage = usage;
+    m_HostVisible = hostVisible;
+
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = static_cast<VkBufferUsageFlags>(usage);
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkResult result = vkCreateBuffer(m_Context->GetDevice(), &bufferInfo, nullptr, &m_Buffer);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create buffer: %d", result);
+        return false;
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(m_Context->GetDevice(), m_Buffer, &memRequirements);
+
+    VkMemoryPropertyFlags properties = hostVisible
+        ? (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        : VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+    if (!AllocateMemory(properties)) {
+        return false;
+    }
+
+    result = vkBindBufferMemory(m_Context->GetDevice(), m_Buffer, m_Memory, 0);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to bind buffer memory: %d", result);
+        return false;
+    }
+
+    return true;
+}
+
+void VulkanBuffer::Destroy() {
+    if (m_MappedData) {
+        Unmap();
+    }
+
+    if (m_Buffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(m_Context->GetDevice(), m_Buffer, nullptr);
+        m_Buffer = VK_NULL_HANDLE;
+    }
+
+    if (m_Memory != VK_NULL_HANDLE) {
+        vkFreeMemory(m_Context->GetDevice(), m_Memory, nullptr);
+        m_Memory = VK_NULL_HANDLE;
+    }
+
+    m_Size = 0;
+}
+
+bool VulkanBuffer::UploadData(const void* data, usize size, usize offset) {
+    if (size + offset > m_Size) {
+        ENJIN_LOG_ERROR(Renderer, "Data size exceeds buffer size");
+        return false;
+    }
+
+    if (m_HostVisible) {
+        void* mapped = Map();
+        if (!mapped) {
+            return false;
+        }
+        std::memcpy(static_cast<u8*>(mapped) + offset, data, size);
+        Unmap();
+        return true;
+    }
+
+    // For device-local buffers, we'd need a staging buffer
+    // For now, we'll require host-visible buffers for simplicity
+    ENJIN_LOG_WARN(Renderer, "UploadData called on device-local buffer - use host-visible buffer");
+    return false;
+}
+
+void* VulkanBuffer::Map() {
+    if (!m_HostVisible) {
+        ENJIN_LOG_ERROR(Renderer, "Cannot map device-local buffer");
+        return nullptr;
+    }
+
+    if (m_MappedData) {
+        return m_MappedData;
+    }
+
+    VkResult result = vkMapMemory(m_Context->GetDevice(), m_Memory, 0, m_Size, 0, &m_MappedData);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to map buffer memory: %d", result);
+        return nullptr;
+    }
+
+    return m_MappedData;
+}
+
+void VulkanBuffer::Unmap() {
+    if (m_MappedData) {
+        vkUnmapMemory(m_Context->GetDevice(), m_Memory);
+        m_MappedData = nullptr;
+    }
+}
+
+u32 VulkanBuffer::FindMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_Context->GetPhysicalDevice(), &memProperties);
+
+    for (u32 i = 0; i < memProperties.memoryTypeCount; ++i) {
+        if ((typeFilter & (1 << i)) &&
+            (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    ENJIN_LOG_ERROR(Renderer, "Failed to find suitable memory type");
+    return UINT32_MAX;
+}
+
+bool VulkanBuffer::AllocateMemory(VkMemoryPropertyFlags properties) {
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(m_Context->GetDevice(), m_Buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (allocInfo.memoryTypeIndex == UINT32_MAX) {
+        return false;
+    }
+
+    VkResult result = vkAllocateMemory(m_Context->GetDevice(), &allocInfo, nullptr, &m_Memory);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to allocate buffer memory: %d", result);
+        return false;
+    }
+
+    return true;
+}
+
+} // namespace Renderer
+} // namespace Enjin

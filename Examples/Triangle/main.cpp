@@ -24,6 +24,9 @@ public:
         // Register render system
         m_RenderSystem = m_World->RegisterSystem<Enjin::ECS::RenderSystem>(
             m_World.get(), m_Renderer.get());
+        
+        // Initialize render system (creates pipeline, buffers, etc.)
+        m_RenderSystem->Initialize();
 
         ENJIN_LOG_INFO(Game, "Triangle Example initialized");
     }
@@ -31,6 +34,9 @@ public:
     void Shutdown() override {
         ENJIN_LOG_INFO(Game, "Triangle Example shutting down...");
         
+        if (m_RenderSystem) {
+            m_RenderSystem->Shutdown();
+        }
         m_RenderSystem = nullptr;
         m_World.reset();
         m_Renderer.reset();
@@ -48,14 +54,13 @@ public:
             return;
         }
 
-        // Begin frame
+        // Begin frame (starts command buffer recording)
         m_Renderer->BeginFrame();
 
-        // Render systems will be called during Update, but for now
-        // we just clear the screen
-        // TODO: Actual rendering will happen in RenderSystem when pipelines are added
+        // Render systems will be called during Update, which records draw commands
+        // The actual rendering happens when EndFrame() submits the command buffer
 
-        // End frame
+        // End frame (submits command buffer and presents)
         m_Renderer->EndFrame();
     }
 

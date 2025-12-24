@@ -26,6 +26,7 @@ public:
     VkRenderPass GetRenderPass() const { return m_RenderPass; }
     VulkanContext* GetContext() const { return m_Context.get(); }
     VulkanSwapchain* GetSwapchain() const { return m_Swapchain.get(); }
+    VkExtent2D GetSwapchainExtent() const { return m_Swapchain ? m_Swapchain->GetExtent() : VkExtent2D{0, 0}; }
 
     void OnWindowResize(u32 width, u32 height);
 
