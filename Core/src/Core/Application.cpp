@@ -5,11 +5,6 @@
 
 namespace Enjin {
 
-extern Window* CreateWindow(const WindowDesc& desc);
-extern void DestroyWindow(Window* window);
-
-namespace Enjin {
-
 Application::Application() {
 }
 

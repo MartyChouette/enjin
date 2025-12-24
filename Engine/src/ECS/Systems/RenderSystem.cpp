@@ -18,9 +18,9 @@ RenderSystem::~RenderSystem() {
     Shutdown();
 }
 
-void RenderSystem::Initialize() {
+bool RenderSystem::Initialize() {
     if (m_Initialized) {
-        return;
+        return true;
     }
 
     ENJIN_LOG_INFO(Renderer, "Initializing RenderSystem...");
@@ -37,37 +37,79 @@ void RenderSystem::Initialize() {
         m_Camera = &defaultCamera;
     }
 
-    // Create shaders
+    // Create shaders - try loading from files
     m_VertexShader = std::make_unique<Renderer::VulkanShader>(m_Renderer->GetContext());
-    if (!m_VertexShader->LoadFromSPIRV(
-        reinterpret_cast<const u8*>(Renderer::ShaderData::TriangleVertexShader.data()),
-        Renderer::ShaderData::TriangleVertexShader.size() * sizeof(u32))) {
-        ENJIN_LOG_ERROR(Renderer, "Failed to load vertex shader");
-        return;
+    
+    // Try multiple paths for shader files
+    const char* shaderPaths[] = {
+        "shaders/triangle.vert.spv",
+        "Engine/shaders/triangle.vert.spv",
+        "../Engine/shaders/triangle.vert.spv"
+    };
+    
+    bool vertexLoaded = false;
+    for (const char* path : shaderPaths) {
+        if (m_VertexShader->LoadFromFile(path)) {
+            vertexLoaded = true;
+            ENJIN_LOG_INFO(Renderer, "Loaded vertex shader from: %s", path);
+            break;
+        }
+    }
+    
+    if (!vertexLoaded) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to load vertex shader!");
+        ENJIN_LOG_ERROR(Renderer, "Please compile shader: glslc Engine/shaders/triangle.vert -o Engine/shaders/triangle.vert.spv");
+        ENJIN_LOG_ERROR(Renderer, "Or run: ./scripts/compile_shaders.sh");
+        return false;
     }
 
     m_FragmentShader = std::make_unique<Renderer::VulkanShader>(m_Renderer->GetContext());
-    if (!m_FragmentShader->LoadFromSPIRV(
-        reinterpret_cast<const u8*>(Renderer::ShaderData::TriangleFragmentShader.data()),
-        Renderer::ShaderData::TriangleFragmentShader.size() * sizeof(u32))) {
-        ENJIN_LOG_ERROR(Renderer, "Failed to load fragment shader");
-        return;
+    
+    const char* fragPaths[] = {
+        "shaders/triangle.frag.spv",
+        "Engine/shaders/triangle.frag.spv",
+        "../Engine/shaders/triangle.frag.spv"
+    };
+    
+    bool fragmentLoaded = false;
+    for (const char* path : fragPaths) {
+        if (m_FragmentShader->LoadFromFile(path)) {
+            fragmentLoaded = true;
+            ENJIN_LOG_INFO(Renderer, "Loaded fragment shader from: %s", path);
+            break;
+        }
+    }
+    
+    if (!fragmentLoaded) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to load fragment shader!");
+        ENJIN_LOG_ERROR(Renderer, "Please compile shader: glslc Engine/shaders/triangle.frag -o Engine/shaders/triangle.frag.spv");
+        return false;
     }
 
     // Create pipeline
-    CreatePipeline();
+    if (!CreatePipeline()) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create pipeline");
+        return false;
+    }
 
     // Create uniform buffers
-    CreateUniformBuffers();
+    if (!CreateUniformBuffers()) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create uniform buffers");
+        return false;
+    }
 
     // Create descriptor sets
-    CreateDescriptorSets();
+    if (!CreateDescriptorSets()) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create descriptor sets");
+        return false;
+    }
 
     // Create triangle mesh
     CreateTriangleMesh();
 
     m_Initialized = true;
-    ENJIN_LOG_INFO(Renderer, "RenderSystem initialized");
+    ENJIN_LOG_INFO(Renderer, "RenderSystem initialized successfully");
+    return true;
 }
 
 void RenderSystem::Shutdown() {
@@ -117,7 +159,7 @@ void RenderSystem::OnEntityRemoved(Entity entity) {
     m_EntityRenderData.erase(entity);
 }
 
-void RenderSystem::CreatePipeline() {
+bool RenderSystem::CreatePipeline() {
     Renderer::PipelineConfig config;
     config.renderPass = m_Renderer->GetRenderPass();
     config.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -131,10 +173,12 @@ void RenderSystem::CreatePipeline() {
     if (!m_Pipeline->Create(config, m_VertexShader.get(), m_FragmentShader.get())) {
         ENJIN_LOG_ERROR(Renderer, "Failed to create graphics pipeline");
         m_Pipeline.reset();
+        return false;
     }
+    return true;
 }
 
-void RenderSystem::CreateUniformBuffers() {
+bool RenderSystem::CreateUniformBuffers() {
     constexpr usize bufferSize = sizeof(Renderer::UniformBufferObject);
     constexpr u32 framesInFlight = 2; // Match renderer's MAX_FRAMES_IN_FLIGHT
 
@@ -143,12 +187,13 @@ void RenderSystem::CreateUniformBuffers() {
         m_UniformBuffers[i] = std::make_unique<Renderer::VulkanBuffer>(m_Renderer->GetContext());
         if (!m_UniformBuffers[i]->Create(bufferSize, Renderer::BufferUsage::Uniform, true)) {
             ENJIN_LOG_ERROR(Renderer, "Failed to create uniform buffer %u", i);
-            return;
+            return false;
         }
     }
+    return true;
 }
 
-void RenderSystem::CreateDescriptorSets() {
+bool RenderSystem::CreateDescriptorSets() {
     constexpr u32 framesInFlight = 2;
 
     // Create descriptor pool
@@ -166,7 +211,7 @@ void RenderSystem::CreateDescriptorSets() {
         m_Renderer->GetContext()->GetDevice(), &poolInfo, nullptr, &m_DescriptorPool);
     if (result != VK_SUCCESS) {
         ENJIN_LOG_ERROR(Renderer, "Failed to create descriptor pool: %d", result);
-        return;
+        return false;
     }
 
     // Allocate descriptor sets
@@ -183,7 +228,7 @@ void RenderSystem::CreateDescriptorSets() {
         m_Renderer->GetContext()->GetDevice(), &allocInfo, m_DescriptorSets.data());
     if (result != VK_SUCCESS) {
         ENJIN_LOG_ERROR(Renderer, "Failed to allocate descriptor sets: %d", result);
-        return;
+        return false;
     }
 
     // Update descriptor sets
@@ -204,6 +249,7 @@ void RenderSystem::CreateDescriptorSets() {
 
         vkUpdateDescriptorSets(m_Renderer->GetContext()->GetDevice(), 1, &descriptorWrite, 0, nullptr);
     }
+    return true;
 }
 
 void RenderSystem::SetupEntityBuffers(Entity entity) {
@@ -249,16 +295,20 @@ void RenderSystem::UpdateUniformBuffer(Entity entity) {
         return;
     }
 
-    // Get current frame index (simplified - in production you'd track this properly)
-    static u32 currentFrame = 0;
-    currentFrame = (currentFrame + 1) % static_cast<u32>(m_UniformBuffers.size());
+    // Get current frame index - use a simple counter for now
+    // In production, this would be tracked per frame-in-flight
+    static u32 frameCounter = 0;
+    u32 currentFrame = frameCounter % static_cast<u32>(m_UniformBuffers.size());
+    frameCounter++;
 
     Renderer::UniformBufferObject ubo{};
     ubo.model = transform->ToMatrix();
     ubo.view = m_Camera->GetViewMatrix();
     ubo.proj = m_Camera->GetProjectionMatrix();
 
-    m_UniformBuffers[currentFrame]->UploadData(&ubo, sizeof(ubo));
+    if (m_UniformBuffers[currentFrame]) {
+        m_UniformBuffers[currentFrame]->UploadData(&ubo, sizeof(ubo));
+    }
 }
 
 void RenderSystem::CreateTriangleMesh() {
@@ -314,9 +364,10 @@ void RenderSystem::RenderEntity(Entity entity) {
     // Update uniform buffer
     UpdateUniformBuffer(entity);
 
-    // Get current frame index (simplified)
-    static u32 currentFrame = 0;
-    currentFrame = (currentFrame + 1) % static_cast<u32>(m_DescriptorSets.size());
+    // Get current frame index - use a simple counter
+    static u32 frameCounter = 0;
+    u32 currentFrame = frameCounter % static_cast<u32>(m_DescriptorSets.size());
+    frameCounter++;
 
     // Bind pipeline
     m_Pipeline->Bind(commandBuffer);

@@ -8,12 +8,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Build options
 option(ENJIN_BUILD_EDITOR "Build the Enjin Editor" ON)
 option(ENJIN_BUILD_TESTS "Build unit tests" OFF)
-option(ENJIN_BUILD_EXAMPLES "Build example projects" OFF)
+option(ENJIN_BUILD_EXAMPLES "Build example projects" ON)
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Copy shaders to output directory
+file(COPY ${CMAKE_SOURCE_DIR}/Engine/shaders DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
 # Include directories
 include_directories(

@@ -1,5 +1,7 @@
 #include "Enjin/Renderer/Techniques/RenderingTechnique.h"
 #include "Enjin/Logging/Log.h"
+#include <algorithm>
+#include <memory>
 
 namespace Enjin {
 namespace Renderer {

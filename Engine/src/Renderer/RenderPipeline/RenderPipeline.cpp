@@ -2,6 +2,8 @@
 #include "Enjin/Renderer/Vulkan/VulkanRenderer.h"
 #include "Enjin/Renderer/Vulkan/VulkanPipeline.h"
 #include "Enjin/Logging/Log.h"
+#include <algorithm>
+#include <cstring>
 #include "Enjin/Core/Assert.h"
 
 namespace Enjin {

@@ -2,6 +2,7 @@
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Core/Assert.h"
 #include <algorithm>
+#include <cstring>
 
 namespace Enjin {
 namespace Renderer {

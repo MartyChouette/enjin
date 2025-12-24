@@ -1,6 +1,7 @@
 #include "Enjin/Physics/PhysicsWorld.h"
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Math/Math.h"
+#include <algorithm>
 
 namespace Enjin {
 namespace Physics {

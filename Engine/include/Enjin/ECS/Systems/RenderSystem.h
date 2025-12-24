@@ -30,7 +30,7 @@ public:
     RenderSystem(World* world, Renderer::VulkanRenderer* renderer);
     ~RenderSystem();
 
-    void Initialize();
+    bool Initialize();
     void Shutdown();
 
     void Update(f32 deltaTime) override;

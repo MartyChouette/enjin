@@ -337,10 +337,13 @@ bool GPUCullingSystem::CreateComputePipeline() {
     bool shaderLoaded = false;
     if (computeShader.LoadFromFile("shaders/cull.comp.spv")) {
         shaderLoaded = true;
+        ENJIN_LOG_INFO(Renderer, "Loaded compute shader from file");
     } else {
-        // Fallback: Try loading from ShaderData if available
-        ENJIN_LOG_WARN(Renderer, "Compute shader not found, using CPU fallback culling");
-        // CPU fallback will be used
+        ENJIN_LOG_WARN(Renderer, "Compute shader not found at shaders/cull.comp.spv");
+        ENJIN_LOG_WARN(Renderer, "GPU Culling will use CPU fallback until compute shader is compiled");
+        ENJIN_LOG_INFO(Renderer, "To compile: glslc Engine/shaders/cull.comp -o Engine/shaders/cull.comp.spv");
+        // Continue without GPU pipeline - CPU fallback will be used
+        return true; // Return true so system can still be used with CPU fallback
     }
 
     if (shaderLoaded) {
@@ -360,12 +363,11 @@ bool GPUCullingSystem::CreateComputePipeline() {
             m_Context->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_CullPipeline);
         if (result != VK_SUCCESS) {
             ENJIN_LOG_ERROR(Renderer, "Failed to create compute pipeline: %d", result);
-            return false;
+            ENJIN_LOG_WARN(Renderer, "GPU Culling will use CPU fallback");
+            return true; // Allow CPU fallback
         }
 
         ENJIN_LOG_INFO(Renderer, "GPU Culling compute pipeline created successfully");
-    } else {
-        ENJIN_LOG_WARN(Renderer, "GPU Culling will use CPU fallback until compute shader is compiled");
     }
 
     return true;

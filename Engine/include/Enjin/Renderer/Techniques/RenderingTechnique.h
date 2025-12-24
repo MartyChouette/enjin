@@ -5,6 +5,8 @@
 #include "Enjin/Renderer/RenderPipeline/RenderPipeline.h"
 #include <string>
 #include <memory>
+#include <vector>
+#include <unordered_map>
 
 namespace Enjin {
 namespace Renderer {
