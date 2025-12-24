@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <functional>
 
 namespace Enjin {
 namespace Renderer {
@@ -13,6 +14,7 @@ namespace Renderer {
 // Forward declarations
 class VulkanPipeline;
 class VulkanShader;
+class VulkanContext;
 
 // Material parameter types
 enum class MaterialParamType {
@@ -65,7 +67,7 @@ public:
     MaterialInstance();
     ~MaterialInstance();
 
-    bool Load(const MaterialDefinition& definition);
+    bool Load(VulkanContext* context, VkRenderPass renderPass, const MaterialDefinition& definition);
     void Reload(); // Hot-reload material
     void Unload();
 
@@ -85,6 +87,8 @@ public:
     void UpdateUniforms(VkCommandBuffer cmd, u32 frameIndex);
 
 private:
+    VulkanContext* m_Context = nullptr;
+    VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     MaterialDefinition m_Definition;
     std::unique_ptr<VulkanPipeline> m_Pipeline;
     std::unique_ptr<VulkanShader> m_VertexShader;
@@ -101,8 +105,8 @@ public:
     ~MaterialSystem();
 
     // Load material from file (JSON)
-    u32 LoadMaterial(const std::string& filepath);
-    u32 LoadMaterial(const MaterialDefinition& definition);
+    u32 LoadMaterial(VulkanContext* context, VkRenderPass renderPass, const std::string& filepath);
+    u32 LoadMaterial(VulkanContext* context, VkRenderPass renderPass, const MaterialDefinition& definition);
     
     // Get material
     MaterialInstance* GetMaterial(u32 id);

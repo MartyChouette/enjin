@@ -34,6 +34,8 @@ public:
     const std::vector<VkImage>& GetImages() const { return m_Images; }
     const std::vector<VkImageView>& GetImageViews() const { return m_ImageViews; }
     const std::vector<VkFramebuffer>& GetFramebuffers() const { return m_Framebuffers; }
+    VkImageView GetDepthImageView() const { return m_DepthImageView; }
+    VkFormat GetDepthFormat() const { return m_DepthFormat; }
 
     VkFramebuffer GetFramebuffer(u32 index) const {
         return index < m_Framebuffers.size() ? m_Framebuffers[index] : VK_NULL_HANDLE;
@@ -50,6 +52,9 @@ private:
     bool CreateSwapchain(VkSurfaceKHR surface, u32 width, u32 height);
     bool CreateImageViews();
     void DestroyImageViews();
+    bool CreateDepthResources();
+    void DestroyDepthResources();
+    VkFormat FindDepthFormat();
     void DestroyFramebuffers();
 
     VulkanContext* m_Context = nullptr;
@@ -61,6 +66,12 @@ private:
     std::vector<VkImageView> m_ImageViews;
     std::vector<VkFramebuffer> m_Framebuffers;
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+    
+    // Depth buffer resources
+    VkImage m_DepthImage = VK_NULL_HANDLE;
+    VkDeviceMemory m_DepthImageMemory = VK_NULL_HANDLE;
+    VkImageView m_DepthImageView = VK_NULL_HANDLE;
+    VkFormat m_DepthFormat = VK_FORMAT_UNDEFINED;
 };
 
 } // namespace Renderer

@@ -26,7 +26,11 @@ public:
 
     // Register texture (returns handle for shader access)
     BindlessHandle RegisterTexture(VkImageView imageView, VkSampler sampler);
+    BindlessHandle RegisterTexture(VulkanImage* image, VkSampler sampler = VK_NULL_HANDLE);
     void UnregisterTexture(BindlessHandle handle);
+    
+    // Create default sampler (linear filtering, repeat wrap)
+    VkSampler CreateDefaultSampler();
 
     // Register buffer (returns handle for shader access)
     BindlessHandle RegisterBuffer(VkBuffer buffer, VkDescriptorType type);

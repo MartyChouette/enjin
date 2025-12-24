@@ -230,6 +230,21 @@ void VulkanContext::SetPresentQueueFamily(u32 queueFamily) {
     vkGetDeviceQueue(m_Device, queueFamily, 0, &m_PresentQueue);
 }
 
+u32 VulkanContext::FindMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memProperties);
+
+    for (u32 i = 0; i < memProperties.memoryTypeCount; ++i) {
+        if ((typeFilter & (1 << i)) &&
+            (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    ENJIN_LOG_ERROR(Renderer, "Failed to find suitable memory type");
+    return UINT32_MAX;
+}
+
 std::vector<const char*> VulkanContext::GetRequiredExtensions() const {
     u32 glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);

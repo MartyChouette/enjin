@@ -16,11 +16,18 @@ VulkanSwapchain::~VulkanSwapchain() {
 
 bool VulkanSwapchain::Initialize(VkSurfaceKHR surface, u32 width, u32 height) {
     m_Surface = surface;
-    return CreateSwapchain(surface, width, height) && CreateImageViews();
+    if (!CreateSwapchain(surface, width, height) || !CreateImageViews()) {
+        return false;
+    }
+    if (!CreateDepthResources()) {
+        return false;
+    }
+    return true;
 }
 
 void VulkanSwapchain::Shutdown() {
     DestroyFramebuffers();
+    DestroyDepthResources();
     DestroyImageViews();
 
     if (m_Swapchain != VK_NULL_HANDLE) {
@@ -33,10 +40,16 @@ void VulkanSwapchain::Recreate(u32 width, u32 height) {
     vkDeviceWaitIdle(m_Context->GetDevice());
 
     DestroyFramebuffers();
+    DestroyDepthResources();
     DestroyImageViews();
 
     if (!CreateSwapchain(m_Surface, width, height) || !CreateImageViews()) {
         ENJIN_LOG_ERROR(Renderer, "Failed to recreate swapchain");
+        return;
+    }
+    
+    if (!CreateDepthResources()) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to recreate depth resources");
         return;
     }
 
@@ -223,12 +236,17 @@ void VulkanSwapchain::RecreateFramebuffers() {
     DestroyFramebuffers();
     m_Framebuffers.resize(m_ImageViews.size());
 
+    std::vector<VkImageView> attachments(2);
+    attachments[1] = m_DepthImageView; // Depth attachment is same for all framebuffers
+
     for (usize i = 0; i < m_ImageViews.size(); ++i) {
+        attachments[0] = m_ImageViews[i]; // Color attachment
+        
         VkFramebufferCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         createInfo.renderPass = m_RenderPass;
-        createInfo.attachmentCount = 1;
-        createInfo.pAttachments = &m_ImageViews[i];
+        createInfo.attachmentCount = static_cast<u32>(attachments.size());
+        createInfo.pAttachments = attachments.data();
         createInfo.width = m_Extent.width;
         createInfo.height = m_Extent.height;
         createInfo.layers = 1;
@@ -247,6 +265,113 @@ void VulkanSwapchain::DestroyFramebuffers() {
         }
     }
     m_Framebuffers.clear();
+}
+
+VkFormat VulkanSwapchain::FindDepthFormat() {
+    std::vector<VkFormat> candidates = {
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT
+    };
+
+    for (VkFormat format : candidates) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(m_Context->GetPhysicalDevice(), format, &props);
+        
+        if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+            return format;
+        }
+    }
+
+    // Fallback
+    return VK_FORMAT_D32_SFLOAT;
+}
+
+bool VulkanSwapchain::CreateDepthResources() {
+    m_DepthFormat = FindDepthFormat();
+
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = m_DepthFormat;
+    imageInfo.extent.width = m_Extent.width;
+    imageInfo.extent.height = m_Extent.height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    VkResult result = vkCreateImage(m_Context->GetDevice(), &imageInfo, nullptr, &m_DepthImage);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create depth image: %d", result);
+        return false;
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(m_Context->GetDevice(), m_DepthImage, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = m_Context->FindMemoryType(
+        memRequirements.memoryTypeBits,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    );
+
+    result = vkAllocateMemory(m_Context->GetDevice(), &allocInfo, nullptr, &m_DepthImageMemory);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to allocate depth image memory: %d", result);
+        vkDestroyImage(m_Context->GetDevice(), m_DepthImage, nullptr);
+        m_DepthImage = VK_NULL_HANDLE;
+        return false;
+    }
+
+    vkBindImageMemory(m_Context->GetDevice(), m_DepthImage, m_DepthImageMemory, 0);
+
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = m_DepthImage;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = m_DepthFormat;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 1;
+
+    result = vkCreateImageView(m_Context->GetDevice(), &viewInfo, nullptr, &m_DepthImageView);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create depth image view: %d", result);
+        vkFreeMemory(m_Context->GetDevice(), m_DepthImageMemory, nullptr);
+        vkDestroyImage(m_Context->GetDevice(), m_DepthImage, nullptr);
+        m_DepthImage = VK_NULL_HANDLE;
+        m_DepthImageMemory = VK_NULL_HANDLE;
+        return false;
+    }
+
+    ENJIN_LOG_INFO(Renderer, "Depth buffer created: format %d, %dx%d", m_DepthFormat, m_Extent.width, m_Extent.height);
+    return true;
+}
+
+void VulkanSwapchain::DestroyDepthResources() {
+    if (m_DepthImageView != VK_NULL_HANDLE) {
+        vkDestroyImageView(m_Context->GetDevice(), m_DepthImageView, nullptr);
+        m_DepthImageView = VK_NULL_HANDLE;
+    }
+
+    if (m_DepthImage != VK_NULL_HANDLE) {
+        vkDestroyImage(m_Context->GetDevice(), m_DepthImage, nullptr);
+        m_DepthImage = VK_NULL_HANDLE;
+    }
+
+    if (m_DepthImageMemory != VK_NULL_HANDLE) {
+        vkFreeMemory(m_Context->GetDevice(), m_DepthImageMemory, nullptr);
+        m_DepthImageMemory = VK_NULL_HANDLE;
+    }
 }
 
 } // namespace Renderer

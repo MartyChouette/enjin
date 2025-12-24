@@ -1,4 +1,5 @@
 #include "Enjin/Renderer/Vulkan/BindlessResources.h"
+#include "Enjin/Renderer/Vulkan/VulkanImage.h"
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Core/Assert.h"
 #include <algorithm>
@@ -88,6 +89,52 @@ BindlessHandle BindlessResourceManager::RegisterTexture(VkImageView imageView, V
     m_Dirty = true;
     ENJIN_LOG_DEBUG(Renderer, "Registered texture at handle %u", handle);
     return handle;
+}
+
+BindlessHandle BindlessResourceManager::RegisterTexture(VulkanImage* image, VkSampler sampler) {
+    if (!image || !image->GetImageView()) {
+        ENJIN_LOG_ERROR(Renderer, "Invalid VulkanImage");
+        return INVALID_BINDLESS_HANDLE;
+    }
+    
+    // Use default sampler if none provided
+    if (sampler == VK_NULL_HANDLE) {
+        sampler = CreateDefaultSampler();
+        if (sampler == VK_NULL_HANDLE) {
+            return INVALID_BINDLESS_HANDLE;
+        }
+    }
+    
+    return RegisterTexture(image->GetImageView(), sampler);
+}
+
+VkSampler BindlessResourceManager::CreateDefaultSampler() {
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1.0f;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+    
+    VkSampler sampler;
+    VkResult result = vkCreateSampler(m_Context->GetDevice(), &samplerInfo, nullptr, &sampler);
+    if (result != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to create default sampler: %d", result);
+        return VK_NULL_HANDLE;
+    }
+    
+    return sampler;
 }
 
 void BindlessResourceManager::UnregisterTexture(BindlessHandle handle) {

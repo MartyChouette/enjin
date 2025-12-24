@@ -1,0 +1,18 @@
+{
+    "name": "ExampleMaterial",
+    "vertexShader": "shaders/triangle.vert.spv",
+    "fragmentShader": "shaders/triangle.frag.spv",
+    "depthTest": true,
+    "depthWrite": true,
+    "blendEnable": false,
+    "cullMode": "back",
+    "parameters": {
+        "metallic": 0.5,
+        "roughness": 0.5,
+        "emissive": 0.0
+    },
+    "textures": {
+        "albedo": "textures/default_albedo.png",
+        "normal": "textures/default_normal.png"
+    }
+}
