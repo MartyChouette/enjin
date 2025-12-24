@@ -3,9 +3,9 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-namespace Enjin {
-
 #include <iostream>
+
+namespace Enjin {
 
 // GLFW implementation of Window
 class GLFWWindow : public Window {
