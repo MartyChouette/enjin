@@ -1,0 +1,58 @@
+#pragma once
+
+#include "Enjin/Platform/Platform.h"
+#include <vulkan/vulkan.h>
+#include <vector>
+
+namespace Enjin {
+namespace Renderer {
+
+// Vulkan context - manages Vulkan instance, device, and queues
+class ENJIN_API VulkanContext {
+public:
+    VulkanContext();
+    ~VulkanContext();
+
+    bool Initialize();
+    void Shutdown();
+
+    VkInstance GetInstance() const { return m_Instance; }
+    VkDevice GetDevice() const { return m_Device; }
+    VkPhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
+    VkQueue GetGraphicsQueue() const { return m_GraphicsQueue; }
+    VkQueue GetPresentQueue() const { return m_PresentQueue; }
+    u32 GetGraphicsQueueFamily() const { return m_GraphicsQueueFamily; }
+    u32 GetPresentQueueFamily() const { return m_PresentQueueFamily; }
+
+    // Find present queue family for a surface
+    u32 FindPresentQueueFamily(VkSurfaceKHR surface) const;
+    void SetPresentQueueFamily(u32 queueFamily);
+
+protected:
+    friend class VulkanRenderer;
+    bool CreateInstance();
+    bool SelectPhysicalDevice();
+    bool CreateLogicalDevice();
+    bool CreateQueues();
+
+    std::vector<const char*> GetRequiredExtensions() const;
+    bool CheckValidationLayerSupport() const;
+    bool IsDeviceSuitable(VkPhysicalDevice device) const;
+
+    VkInstance m_Instance = VK_NULL_HANDLE;
+    VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
+    VkDevice m_Device = VK_NULL_HANDLE;
+    VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
+    VkQueue m_PresentQueue = VK_NULL_HANDLE;
+    u32 m_GraphicsQueueFamily = UINT32_MAX;
+    u32 m_PresentQueueFamily = UINT32_MAX;
+
+#ifdef ENJIN_BUILD_DEBUG
+    VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+    bool CreateDebugMessenger();
+    void DestroyDebugMessenger();
+#endif
+};
+
+} // namespace Renderer
+} // namespace Enjin
