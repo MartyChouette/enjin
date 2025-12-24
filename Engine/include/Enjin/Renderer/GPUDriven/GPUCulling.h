@@ -59,6 +59,7 @@ public:
     bool ExecuteCulling(
         const Math::Matrix4& viewMatrix,
         const Math::Matrix4& projectionMatrix,
+        VkCommandBuffer commandBuffer,
         VkBuffer& outIndirectDrawBuffer,
         u32& outDrawCount
     );
@@ -75,6 +76,11 @@ private:
     bool CreateComputePipeline();
     bool CreateBuffers();
     void UpdateFrustumPlanes(const Math::Matrix4& viewProj);
+    void UpdateDescriptorSet(VkCommandBuffer commandBuffer);
+
+    VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
+    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+    u32 m_ObjectCount = 0;
 
     VulkanContext* m_Context = nullptr;
     

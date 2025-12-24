@@ -32,8 +32,11 @@ public:
     BindlessHandle RegisterBuffer(VkBuffer buffer, VkDescriptorType type);
     void UnregisterBuffer(BindlessHandle handle);
 
-    // Update descriptor set (call before rendering)
+    // Update descriptor set (call before rendering or when resources change)
     void UpdateDescriptorSet();
+    
+    // Rebuild descriptor set (internal, called by UpdateDescriptorSet)
+    void RebuildDescriptorSet();
 
     // Get descriptor set for binding
     VkDescriptorSet GetDescriptorSet() const { return m_DescriptorSet; }
@@ -49,7 +52,6 @@ public:
 private:
     bool CreateDescriptorSetLayout();
     bool AllocateDescriptorSet();
-    void RebuildDescriptorSet();
 
     VulkanContext* m_Context = nullptr;
 
