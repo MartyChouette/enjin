@@ -26,10 +26,7 @@ public:
             m_World.get(), m_Renderer.get());
         
         // Initialize render system (creates pipeline, buffers, etc.)
-        if (!m_RenderSystem->Initialize()) {
-            ENJIN_LOG_FATAL(Game, "Failed to initialize render system");
-            return;
-        }
+        m_RenderSystem->Initialize();
 
         ENJIN_LOG_INFO(Game, "Triangle Example initialized");
     }

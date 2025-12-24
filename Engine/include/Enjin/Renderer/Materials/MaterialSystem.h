@@ -119,9 +119,6 @@ public:
     // Material iteration
     void ForEachMaterial(std::function<void(MaterialInstance*)> callback);
 
-    // Shutdown
-    void Shutdown();
-
 private:
     std::vector<std::unique_ptr<MaterialInstance>> m_Materials;
     std::unordered_map<std::string, u32> m_MaterialNameMap;

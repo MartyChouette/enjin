@@ -49,12 +49,6 @@ bool VulkanShader::CompileFromGLSL(const std::string& source, VkShaderStageFlagB
 bool VulkanShader::LoadFromFile(const std::string& filepath) {
     std::vector<u32> spirv;
     if (!ShaderCompiler::LoadSPIRV(filepath, spirv)) {
-        ENJIN_LOG_ERROR(Renderer, "Failed to load SPIR-V from file: %s", filepath.c_str());
-        return false;
-    }
-
-    if (spirv.empty()) {
-        ENJIN_LOG_ERROR(Renderer, "SPIR-V file is empty: %s", filepath.c_str());
         return false;
     }
 
