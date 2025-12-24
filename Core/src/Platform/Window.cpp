@@ -1,9 +1,8 @@
 #include "Enjin/Platform/Window.h"
 #include "Enjin/Logging/Log.h"
+#include <iostream>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-
-#include <iostream>
 
 namespace Enjin {
 
@@ -102,7 +101,7 @@ private:
     ResizeCallback m_ResizeCallback;
 };
 
-    Window* CreateWindow(const WindowDesc& desc) {
+Window* CreateWindow(const WindowDesc& desc) {
     static bool glfwInitialized = false;
     if (!glfwInitialized) {
         // Set error callback for initialization too
