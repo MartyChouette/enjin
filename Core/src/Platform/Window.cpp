@@ -5,12 +5,19 @@
 
 namespace Enjin {
 
+#include <iostream>
+
 // GLFW implementation of Window
 class GLFWWindow : public Window {
 public:
     GLFWWindow(const WindowDesc& desc) : m_Desc(desc) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // We'll use Vulkan
         glfwWindowHint(GLFW_RESIZABLE, desc.resizable ? GLFW_TRUE : GLFW_FALSE);
+
+        // Add error callback before creation
+        glfwSetErrorCallback([](int error, const char* description) {
+            std::cerr << "GLFW Error " << error << ": " << description << std::endl;
+        });
 
         m_Window = glfwCreateWindow(
             static_cast<int>(desc.width),
@@ -95,11 +102,17 @@ private:
     ResizeCallback m_ResizeCallback;
 };
 
-Window* CreateWindow(const WindowDesc& desc) {
+    Window* CreateWindow(const WindowDesc& desc) {
     static bool glfwInitialized = false;
     if (!glfwInitialized) {
+        // Set error callback for initialization too
+        glfwSetErrorCallback([](int error, const char* description) {
+            std::cerr << "GLFW Error (Init) " << error << ": " << description << std::endl;
+        });
+
         if (!glfwInit()) {
             ENJIN_LOG_ERROR(Core, "Failed to initialize GLFW");
+            std::cerr << "CRITICAL ERROR: Failed to initialize GLFW!" << std::endl;
             return nullptr;
         }
         glfwInitialized = true;
