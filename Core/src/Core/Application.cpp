@@ -6,7 +6,15 @@
 #include <iostream>
 
 #if defined(ENJIN_PLATFORM_WINDOWS)
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
     #include <Windows.h>
+    // Windows headers define CreateWindow/CreateWindowA macros which conflict
+    // with Enjin::CreateWindow(). Undefine them so our function name is usable.
+    #ifdef CreateWindow
+        #undef CreateWindow
+    #endif
 #endif
 
 namespace Enjin {
@@ -62,7 +70,8 @@ void Application::InitializeEngine() {
     windowDesc.width = 1280;
     windowDesc.height = 720;
     windowDesc.title = "Enjin Engine";
-    m_Window = CreateWindow(windowDesc);
+    // Parentheses prevent potential macro substitution as well.
+    m_Window = (CreateWindow)(windowDesc);
     
     if (!m_Window) {
         ENJIN_LOG_FATAL(Core, "Failed to create window");
