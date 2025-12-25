@@ -4,6 +4,7 @@
 #include "Enjin/Platform/Paths.h"
 #include <chrono>
 #include <iostream>
+#undef CreateWindow
 
 #if defined(ENJIN_PLATFORM_WINDOWS)
     #ifndef WIN32_LEAN_AND_MEAN
