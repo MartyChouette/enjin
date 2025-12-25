@@ -1,8 +1,22 @@
 #include "Enjin/Core/Application.h"
 #include "Enjin/Logging/Log.h"
 #include "Enjin/Platform/Window.h"
+#include "Enjin/Platform/Paths.h"
 #include <chrono>
 #include <iostream>
+#undef CreateWindow
+
+#if defined(ENJIN_PLATFORM_WINDOWS)
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <Windows.h>
+    // Windows headers define CreateWindow/CreateWindowA macros which conflict
+    // with Enjin::CreateWindow(). Undefine them so our function name is usable.
+    #ifdef CreateWindow
+        #undef CreateWindow
+    #endif
+#endif
 
 namespace Enjin {
 
@@ -16,18 +30,39 @@ Application::~Application() {
 }
 
 int Application::Run() {
-    InitializeEngine();
-    Initialize();
+    int exitCode = 0;
+    try {
+        InitializeEngine();
+        if (!m_Running || !m_Window) {
+            // Engine init already logged the failure.
+            ShutdownEngine();
+            return 1;
+        }
 
-    MainLoop();
+        Initialize();
+        MainLoop();
+        Shutdown();
+        ShutdownEngine();
+    } catch (const std::exception& e) {
+        ENJIN_LOG_FATAL(Core, "Unhandled exception: %s", e.what());
+        std::cerr << "Unhandled exception: " << e.what() << std::endl;
+        exitCode = 1;
+        ShutdownEngine();
+    } catch (...) {
+        ENJIN_LOG_FATAL(Core, "Unhandled non-standard exception");
+        std::cerr << "Unhandled non-standard exception" << std::endl;
+        exitCode = 1;
+        ShutdownEngine();
+    }
 
-    Shutdown();
-    ShutdownEngine();
-
-    return 0;
+    return exitCode;
 }
 
 void Application::InitializeEngine() {
+    // Make relative paths (like "enjin.log" or shader/assets folders) resolve
+    // next to the executable, even when launched via double-click.
+    Platform::SetWorkingDirectoryToExecutableDirectory();
+
     Logger::Get().Initialize();
     ENJIN_LOG_INFO(Core, "Initializing Enjin Engine...");
     
@@ -36,11 +71,21 @@ void Application::InitializeEngine() {
     windowDesc.width = 1280;
     windowDesc.height = 720;
     windowDesc.title = "Enjin Engine";
-    m_Window = CreateWindow(windowDesc);
+    // Parentheses prevent potential macro substitution as well.
+    m_Window = (CreateWindow)(windowDesc);
     
     if (!m_Window) {
         ENJIN_LOG_FATAL(Core, "Failed to create window");
         std::cerr << "CRITICAL ERROR: Failed to create window!" << std::endl;
+#if defined(ENJIN_PLATFORM_WINDOWS)
+        // If launched as a GUI app (no console), show an error dialog.
+        if (GetConsoleWindow() == nullptr) {
+            MessageBoxA(nullptr,
+                "Failed to create window.\n\nCheck 'enjin.log' next to the executable for details.",
+                "Enjin Fatal Error",
+                MB_OK | MB_ICONERROR);
+        }
+#endif
         m_Running = false;
         return;
     }

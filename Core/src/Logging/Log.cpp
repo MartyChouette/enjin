@@ -14,29 +14,53 @@ Logger& Logger::Get() {
 }
 
 void Logger::Initialize(const std::string& logFile) {
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    
-    if (m_Initialized) {
-        return;
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        
+        if (m_Initialized) {
+            return;
+        }
+
+        // Default: enable all categories so logs actually show up.
+        for (usize i = 0; i < static_cast<usize>(LogCategory::Count); ++i) {
+            m_CategoryEnabled[i] = true;
+        }
+
+        // Always initialize console logging, even if file logging is unavailable.
+        m_Initialized = true;
+
+        m_LogFile = std::make_unique<std::ofstream>(logFile, std::ios::app);
+        if (!m_LogFile->is_open()) {
+            std::cerr << "Failed to open log file: " << logFile << " (continuing with console logging only)" << std::endl;
+            m_LogFile.reset();
+        }
     }
 
-    m_LogFile = std::make_unique<std::ofstream>(logFile, std::ios::app);
-    if (!m_LogFile->is_open()) {
-        std::cerr << "Failed to open log file: " << logFile << std::endl;
-        return;
-    }
-
-    m_Initialized = true;
+    // IMPORTANT: do not call Info() while holding m_Mutex (it locks internally).
     Info(LogCategory::Core, __FILE__, __LINE__, __FUNCTION__, "Logger initialized");
 }
 
 void Logger::Shutdown() {
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    
-    if (m_Initialized) {
+    // IMPORTANT: do not call Info() while holding m_Mutex (it locks internally).
+    bool shouldLog = false;
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        shouldLog = m_Initialized;
+    }
+
+    if (shouldLog) {
         Info(LogCategory::Core, __FILE__, __LINE__, __FUNCTION__, "Logger shutting down");
-        m_LogFile->close();
-        m_LogFile.reset();
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        if (!m_Initialized) {
+            return;
+        }
+        if (m_LogFile) {
+            m_LogFile->close();
+            m_LogFile.reset();
+        }
         m_Initialized = false;
     }
 }
