@@ -55,22 +55,28 @@ void RenderPipeline::DispatchEvent(RenderEvent& event) {
 void RenderPipeline::BeginFrame() {
     RenderEvent event{RenderEventType::PreFrame};
     DispatchEvent(event);
-    
+
     if (!event.cancelled && m_Renderer) {
-        m_Renderer->BeginFrame();
+        m_FrameActive = m_Renderer->BeginFrame();
     }
-    
+
     event.type = RenderEventType::PostFrame;
     // PostFrame will be called in EndFrame
 }
 
 void RenderPipeline::EndFrame() {
+    if (!m_FrameActive) {
+        return;
+    }
+
     RenderEvent event{RenderEventType::PostFrame};
     DispatchEvent(event);
-    
+
     if (!event.cancelled && m_Renderer) {
         m_Renderer->EndFrame();
     }
+
+    m_FrameActive = false;
 }
 
 void RenderPipeline::BeginRenderPass(VkRenderPass renderPass, VkFramebuffer framebuffer) {

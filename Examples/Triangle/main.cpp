@@ -43,10 +43,8 @@ public:
     }
 
     void Update(f32 deltaTime) override {
-        // Update ECS world
-        if (m_World) {
-            m_World->Update(deltaTime);
-        }
+        // Store delta time so rendering can update the world after the frame begins
+        m_LastDeltaTime = deltaTime;
     }
 
     void Render() override {
@@ -55,10 +53,14 @@ public:
         }
 
         // Begin frame (starts command buffer recording)
-        m_Renderer->BeginFrame();
+        if (!m_Renderer->BeginFrame()) {
+            return;
+        }
 
-        // Render systems will be called during Update, which records draw commands
-        // The actual rendering happens when EndFrame() submits the command buffer
+        // Update ECS world and render the triangle while the frame is active
+        if (m_World) {
+            m_World->Update(m_LastDeltaTime);
+        }
 
         // End frame (submits command buffer and presents)
         m_Renderer->EndFrame();
@@ -68,6 +70,7 @@ private:
     std::unique_ptr<Enjin::Renderer::VulkanRenderer> m_Renderer;
     std::unique_ptr<Enjin::ECS::World> m_World;
     Enjin::ECS::RenderSystem* m_RenderSystem = nullptr;
+    f32 m_LastDeltaTime = 0.0f;
 };
 
 Enjin::Application* CreateApplication() {

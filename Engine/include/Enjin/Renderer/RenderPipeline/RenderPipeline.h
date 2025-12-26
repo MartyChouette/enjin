@@ -113,6 +113,7 @@ public:
 
 private:
     VulkanRenderer* m_Renderer = nullptr;
+    bool m_FrameActive = false;
     
     // Hooks - organized by event type
     std::unordered_map<RenderEventType, std::vector<std::pair<std::string, RenderHook>>> m_Hooks;
