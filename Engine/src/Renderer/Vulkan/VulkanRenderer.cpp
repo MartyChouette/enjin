@@ -347,8 +347,14 @@ bool VulkanRenderer::BeginFrame() {
         return false;
     }
 
+    if (vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0) != VK_SUCCESS) {
+        ENJIN_LOG_ERROR(Renderer, "Failed to reset command buffer");
+        return false;
+    }
+
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
     if (vkBeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], &beginInfo) != VK_SUCCESS) {
         ENJIN_LOG_ERROR(Renderer, "Failed to begin recording command buffer");
