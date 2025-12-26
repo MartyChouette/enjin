@@ -43,8 +43,9 @@ public:
     /**
      * @brief Begin a new frame
      * Acquire next image and begin command buffer recording
+     * @return true if a new frame was started, false otherwise
      */
-    void BeginFrame();
+    bool BeginFrame();
 
     /**
      * @brief End the current frame
@@ -53,6 +54,7 @@ public:
     void EndFrame();
 
     VkCommandBuffer GetCurrentCommandBuffer() const;
+    u32 GetCurrentFrameIndex() const { return m_CurrentFrame; }
     VkRenderPass GetRenderPass() const { return m_RenderPass; }
     VulkanContext* GetContext() const { return m_Context.get(); }
     VulkanSwapchain* GetSwapchain() const { return m_Swapchain.get(); }
