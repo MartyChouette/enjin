@@ -43,8 +43,9 @@ public:
     /**
      * @brief Begin a new frame
      * Acquire next image and begin command buffer recording
+     * @return true if a new frame was started, false otherwise
      */
-    void BeginFrame();
+    bool BeginFrame();
 
     /**
      * @brief End the current frame

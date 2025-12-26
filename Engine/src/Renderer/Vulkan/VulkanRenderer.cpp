@@ -337,14 +337,14 @@ void VulkanRenderer::SubmitCommandBuffer() {
     m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanRenderer::BeginFrame() {
+bool VulkanRenderer::BeginFrame() {
     if (m_IsFrameStarted) {
         ENJIN_LOG_WARN(Renderer, "BeginFrame called while frame already in progress");
-        return;
+        return false;
     }
 
     if (!AcquireNextImage()) {
-        return;
+        return false;
     }
 
     VkCommandBufferBeginInfo beginInfo{};
@@ -352,7 +352,7 @@ void VulkanRenderer::BeginFrame() {
 
     if (vkBeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], &beginInfo) != VK_SUCCESS) {
         ENJIN_LOG_ERROR(Renderer, "Failed to begin recording command buffer");
-        return;
+        return false;
     }
 
     m_IsFrameStarted = true;
@@ -367,11 +367,13 @@ void VulkanRenderer::BeginFrame() {
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     clearValues[1].depthStencil = { 1.0f, 0 };
-    
+
     renderPassInfo.clearValueCount = static_cast<u32>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(m_CommandBuffers[m_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    return true;
 }
 
 void VulkanRenderer::EndFrame() {
