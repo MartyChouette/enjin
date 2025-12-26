@@ -65,10 +65,14 @@ void RenderPipeline::BeginFrame() {
 }
 
 void RenderPipeline::EndFrame() {
+    if (!m_FrameActive) {
+        return;
+    }
+
     RenderEvent event{RenderEventType::PostFrame};
     DispatchEvent(event);
 
-    if (!event.cancelled && m_Renderer && m_FrameActive) {
+    if (!event.cancelled && m_Renderer) {
         m_Renderer->EndFrame();
     }
 
